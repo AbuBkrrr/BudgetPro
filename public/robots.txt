@@ -1,0 +1,24 @@
+# robots.txt for BudgetPro
+# Place at: /public/robots.txt
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /.env*
+Disallow: /node_modules/
+Disallow: /api/secret/
+
+# Allow crawling of blog
+Allow: /blog/
+
+# Specific crawl directives
+Crawl-delay: 1
+Request-rate: 30/60
+
+# Sitemaps
+Sitemap: https://budgetpro.com.ng/sitemap.xml
+Sitemap: https://budgetpro.com.ng/blog-sitemap.xml
+
+# Comment out these lines ONLY if you want to prevent crawling during development
+# User-agent: *
+# Disallow: /

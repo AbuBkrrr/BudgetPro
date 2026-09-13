@@ -1,0 +1,318 @@
+<!-- ============================================
+     EMAIL CAPTURE COMPONENT
+     For Blog Homepage & Footer
+     Astro Component: src/components/EmailCapture.astro
+     ============================================ -->
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+
+  const supabase = createClient(
+    import.meta.env.PUBLIC_SUPABASE_URL,
+    import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+  );
+
+  interface Props {
+    variant?: 'inline' | 'modal' | 'footer';
+    title?: string;
+    description?: string;
+  }
+
+  const { 
+    variant = 'inline',
+    title = 'Get Weekly Financial Tips',
+    description = 'Join 5,000+ people getting smart financial advice for their situation. No spam, just actionable insights.'
+  } = Astro.props;
+
+  let email = '';
+  let loading = false;
+  let message = '';
+  let messageType: 'success' | 'error' | null = null;
+
+  async function handleSubmit(e: Event) {
+    e.preventDefault();
+    if (!email) return;
+
+    loading = true;
+    message = '';
+    messageType = null;
+
+    try {
+      const { data, error } = await supabase
+        .from('email_subscribers')
+        .insert([
+          {
+            email: email.toLowerCase().trim(),
+            source: 'blog_homepage',
+            subscribed_at: new Date().toISOString(),
+          }
+        ])
+        .select();
+
+      if (error) throw error;
+
+      message = '✓ Check your inbox! Welcome email sent.';
+      messageType = 'success';
+      email = '';
+
+      // Track conversion in GA4
+      if (window.gtag) {
+        window.gtag('event', 'email_signup', {
+          'source': 'blog_homepage'
+        });
+      }
+    } catch (err) {
+      message = err.message || 'Sign-up failed. Try again?';
+      messageType = 'error';
+    } finally {
+      loading = false;
+    }
+  }
+</script>
+
+<div class={`email-capture email-capture--${variant}`}>
+  <div class="ec-content">
+    <h3 class="ec-title">{title}</h3>
+    <p class="ec-desc">{description}</p>
+
+    <form onSubmit={handleSubmit} class="ec-form">
+      <input
+        type="email"
+        name="email"
+        placeholder="you@example.com"
+        value={email}
+        onChange={(e) => (email = e.currentTarget.value)}
+        required
+        disabled={loading}
+        class="ec-input"
+      />
+      <button
+        type="submit"
+        disabled={loading || !email}
+        class="ec-button"
+      >
+        {loading ? 'Signing up...' : 'Join Free'}
+      </button>
+    </form>
+
+    {messageType && (
+      <div class={`ec-message ec-message--${messageType}`}>
+        {message}
+      </div>
+    )}
+  </div>
+</div>
+
+<style>
+  .email-capture {
+    padding: 24px;
+    background: var(--navy-900);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+
+  .email-capture--footer {
+    background: var(--navy-800);
+    margin-top: 32px;
+  }
+
+  .email-capture--modal {
+    max-width: 400px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border-radius: 16px;
+  }
+
+  .ec-title {
+    font-family: var(--display);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 0 0 8px;
+  }
+
+  .ec-desc {
+    font-family: var(--body);
+    font-size: 14px;
+    color: var(--ink-muted);
+    margin: 0 0 16px;
+    line-height: 1.5;
+  }
+
+  .ec-form {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .ec-input {
+    flex: 1;
+    min-width: 200px;
+    padding: 10px 12px;
+    background: var(--navy-850);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 14px;
+  }
+
+  .ec-input:focus {
+    outline: 1px solid var(--gold);
+    background: var(--navy-800);
+  }
+
+  .ec-input::placeholder {
+    color: var(--ink-faint);
+  }
+
+  .ec-button {
+    padding: 10px 18px;
+    background: var(--gold);
+    color: var(--navy-950);
+    border: none;
+    border-radius: 8px;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .ec-button:hover:not(:disabled) {
+    background: var(--gold-dim);
+    transform: translateY(-2px);
+  }
+
+  .ec-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .ec-message {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: var(--mono);
+    text-align: center;
+  }
+
+  .ec-message--success {
+    background: rgba(61, 220, 151, 0.12);
+    color: #3ddc97;
+    border: 1px solid rgba(61, 220, 151, 0.2);
+  }
+
+  .ec-message--error {
+    background: rgba(239, 106, 95, 0.12);
+    color: #ef6a5f;
+    border: 1px solid rgba(239, 106, 95, 0.2);
+  }
+
+  @media (max-width: 560px) {
+    .ec-form {
+      flex-direction: column;
+    }
+
+    .ec-input,
+    .ec-button {
+      width: 100%;
+    }
+  }
+</style>
+
+<!-- ============================================
+     SUPABASE TABLE FOR EMAIL SUBSCRIBERS
+     ============================================ -->
+
+<!--
+SQL to create email_subscribers table:
+
+CREATE TABLE email_subscribers (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  source TEXT DEFAULT 'blog_homepage', -- Where they signed up
+  subscribed_at TIMESTAMPTZ DEFAULT NOW(),
+  unsubscribed_at TIMESTAMPTZ,
+  verified_at TIMESTAMPTZ,
+  last_email_sent_at TIMESTAMPTZ,
+  email_count INT DEFAULT 0,
+  tags JSONB DEFAULT '[]', -- Store user interests/segments
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_subscribers_email ON email_subscribers(email);
+CREATE INDEX idx_subscribers_created ON email_subscribers(created_at DESC);
+CREATE INDEX idx_subscribers_unsubscribed ON email_subscribers(unsubscribed_at);
+
+-- Optional: Enable RLS
+ALTER TABLE email_subscribers ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Only admins can read all subscribers"
+  ON email_subscribers FOR SELECT
+  USING (auth.role() = 'service_role');
+
+CREATE POLICY "Subscribers can view their own record"
+  ON email_subscribers FOR SELECT
+  USING (auth.uid() = id);
+-->
+
+<!-- ============================================
+     USAGE IN BLOG PAGES
+     ============================================ -->
+
+<!-- In src/pages/blog/index.astro -->
+<!--
+import EmailCapture from '../../components/EmailCapture.astro';
+
+<EmailCapture 
+  variant="inline"
+  title="Get Weekly Financial Tips"
+  description="Join 5,000+ people getting smart financial advice. No spam."
+/>
+-->
+
+<!-- ============================================
+     INTEGRATION: SENDING EMAILS (Optional)
+     ============================================ -->
+
+<!--
+To actually SEND emails to subscribers, use one of:
+
+1. Sendgrid + GitHub Actions (Recommended)
+   - Scheduled job: Daily digest at 08:00 UTC
+   - Queries email_subscribers table
+   - Sends top 3 blog posts from the week
+
+2. Supabase Functions + Resend
+   - Same logic, deployed on Supabase edge functions
+
+3. Manual: Export CSV, use Mailchimp
+
+Example GitHub Action (.github/workflows/send-weekly-digest.yml):
+
+name: Send Weekly Blog Digest
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'  # Every Monday at 08:00 UTC
+
+jobs:
+  send-digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: npm install @supabase/supabase-js @sendgrid/mail
+      - name: Send digest
+        run: node scripts/send-weekly-digest.js
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          SENDGRID_FROM_EMAIL: hello@budgetpro.com.ng
+-->

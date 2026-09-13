@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="google-adsense-account" content="ca-pub-2229008759020664">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BudgetPro – Terms of Service</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600" rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+     :root {
+  --navy-950: #0a1628;
+  --navy-900: #0e1d34;
+  --navy-850: #11223c;
+  --navy-800: #132846;
+  --navy-700: #1c3358;
+  --gold: #f5a623;
+  --gold-dim: #c8860f;
+  --gold-soft: rgba(245, 166, 35, 0.12);
+  --ink: #edf1f7;
+  --ink-muted: #8a96ac;
+  --ink-faint: #5c6883;
+  --line: rgba(245, 166, 35, 0.16);
+  --line-soft: rgba(255, 255, 255, 0.06);
+  --green: #3ddc97;
+  --red: #ef6a5f;
+  --display: "Space Grotesk", sans-serif;
+  --body: "Inter", sans-serif;
+  --mono: "IBM Plex Mono", monospace;
+}
+        html {
+            scroll-behavior: smooth;
+        }
+        body {
+            background-color: var(--navy-950);
+            color: var(--ink);
+            font-family: var(--body);
+            line-height: 1.8;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+        }
+        a {
+            color: var(--gold);
+            text-decoration: none;
+        }
+        a:hover {
+            opacity: 0.8;
+        }
+        .container {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 0 24px;
+            width: 100%;
+        }
+
+        /* Global Nav */
+        .global-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 22, 40, 0.92);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--line);
+        }
+        .gn-inner {
+            max-width: 1180px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            padding: 12px 20px;
+        }
+        .gn-logo {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 0.4px;
+            color: var(--ink);
+            text-decoration: none;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .gn-logo span {
+            color: var(--gold);
+        }
+        .gn-links {
+            display: flex;
+            gap: 4px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .gn-links::-webkit-scrollbar {
+            display: none;
+        }
+        .gn-link {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            flex-shrink: 0;
+            font-family: var(--mono);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--ink-muted);
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: 0.15s;
+            border: 1px solid transparent;
+        }
+        .gn-link:hover {
+            color: var(--ink);
+            background: var(--navy-850);
+        }
+        .gn-link.active {
+            color: var(--gold);
+            background: var(--gold-soft);
+            border-color: var(--line);
+        }
+        .gn-emoji {
+            font-size: 14px;
+        }
+        @media (max-width: 720px) {
+            .gn-link .gn-text {
+                display: none;
+            }
+            .gn-link {
+                padding: 8px 10px;
+            }
+            .gn-logo {
+                font-size: 14px;
+            }
+            .gn-inner {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+
+        /* Page Content */
+        .page-content {
+            padding: 40px 0 60px;
+            max-width: 860px;
+        }
+        .page-content h1 {
+            font-family: var(--display);
+            font-size: 2.6rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--gold);
+        }
+        .page-content .subtitle {
+            color: var(--ink-muted);
+            font-size: 1.1rem;
+            margin-bottom: 32px;
+        }
+        .page-content h2 {
+            font-family: var(--display);
+            font-size: 1.5rem;
+            margin: 36px 0 12px;
+            color: var(--gold);
+        }
+        .page-content h3 {
+            font-family: var(--display);
+            font-size: 1.2rem;
+            margin: 24px 0 8px;
+            color: var(--gold);
+            opacity: 0.9;
+        }
+        .page-content p {
+            margin-bottom: 16px;
+            color: var(--ink-muted);
+        }
+        .page-content ul,
+        .page-content ol {
+            margin: 0 0 18px 24px;
+            color: var(--ink-muted);
+        }
+        .page-content li {
+            margin-bottom: 6px;
+        }
+        .page-content .legal-date {
+            color: var(--ink-faint);
+            font-style: italic;
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid var(--line-soft);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--navy-950);
+            border-top: 1px solid var(--line-soft);
+            padding: 32px 0 20px;
+            margin-top: auto;
+        }
+        .footer-inner {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+        .footer-inner .copy {
+            color: var(--ink-muted);
+            font-size: 0.85rem;
+        }
+        .footer-inner .copy a {
+            color: var(--gold);
+        }
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 24px;
+        }
+        .footer-links a {
+            font-size: 0.85rem;
+            color: var(--ink-muted);
+            font-family: var(--mono);
+        }
+        .footer-links a:hover {
+            color: var(--gold);
+        }
+
+        @media (max-width: 768px) {
+            .page-content h1 {
+                font-size: 2rem;
+            }
+            .footer-inner {
+                flex-direction: column;
+                text-align: center;
+            }
+            .footer-links {
+                justify-content: center;
+            }
+        }
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 16px;
+            }
+            .page-content h1 {
+                font-size: 1.6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Global Nav -->
+    <header class="global-nav">
+        <div class="gn-inner">
+            <a href="index.html" class="gn-logo">BUDGET<span>PRO</span></a>
+            <nav class="gn-links">
+                <a href="index.html" class="gn-link"><span class="gn-emoji">🏠</span><span class="gn-text">Home</span></a>
+                <a href="mortgage.html" class="gn-link"><span class="gn-emoji">🏠</span><span class="gn-text">Mortgage</span></a>
+                <a href="auto.html" class="gn-link"><span class="gn-emoji">🚗</span><span class="gn-text">Auto</span></a>
+                <a href="construction.html" class="gn-link"><span class="gn-emoji">🏗️</span><span class="gn-text">Construction</span></a>
+                <a href="solar.html" class="gn-link"><span class="gn-emoji">☀️</span><span class="gn-text">Solar</span></a>
+                <a href="business.html" class="gn-link"><span class="gn-emoji">🏢</span><span class="gn-text">Business</span></a>
+                <a href="income.html" class="gn-link"><span class="gn-emoji">💰</span><span class="gn-text">Savings</span></a>
+                <a href="blog.html" class="gn-link"><span class="gn-emoji">📝</span><span class="gn-text">Blog</span></a>
+                <a href="privacy.html" class="gn-link"><span class="gn-emoji">🔒</span><span class="gn-text">Privacy</span></a>
+                <a href="terms.html" class="gn-link active"><span class="gn-emoji">📋</span><span class="gn-text">Terms</span></a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="container page-content">
+        <h1>Terms of Service</h1>
+        <p class="subtitle">Last updated: August 31, 2026</p>
+
+        <p>Welcome to BudgetPro ("we," "our," or "us"). These Terms of Service ("Terms") govern your use of our website <strong>budgetpro.com.ng</strong> (the "Site") and all related calculators, tools, and content.</p>
+
+        <p>By accessing or using the Site, you agree to be bound by these Terms. If you do not agree, please do not use the Site.</p>
+
+        <h2>1. Acceptance of Terms</h2>
+        <p>By using BudgetPro, you confirm that you have read, understood, and accepted these Terms. We reserve the right to update these Terms at any time. Continued use constitutes acceptance of the updated Terms.</p>
+
+        <h2>2. Use of the Site</h2>
+        <p>You agree to use the Site only for lawful purposes and in a manner that does not infringe on the rights of others. You may not:</p>
+        <ul>
+            <li>Use the Site for any illegal or unauthorized purpose.</li>
+            <li>Attempt to gain unauthorized access to our systems or data.</li>
+            <li>Interfere with the proper functioning of the Site.</li>
+            <li>Copy, reproduce, or redistribute any content without permission.</li>
+        </ul>
+
+        <h2>3. Intellectual Property</h2>
+        <p>All content on BudgetPro — including text, graphics, logos, icons, images, and software — is the property of BudgetPro or its content suppliers and is protected by copyright and intellectual property laws. You may not reproduce, distribute, or create derivative works without prior written consent.</p>
+
+        <h2>4. No Financial Advice</h2>
+        <p><strong>Important:</strong> BudgetPro is a financial <strong>education and estimation tool</strong>, not a financial advisory service. All calculations, estimates, and recommendations provided on this Site are for <strong>informational purposes only</strong> and should not be considered as professional financial, legal, or tax advice.</p>
+        <p>You should consult with a qualified financial advisor, accountant, or legal professional before making any financial decisions. We do not guarantee the accuracy or completeness of the information provided.</p>
+
+        <h2>5. Limitation of Liability</h2>
+        <p>To the fullest extent permitted by law, BudgetPro and its owners, employees, and affiliates shall not be liable for any:</p>
+        <ul>
+            <li>Direct, indirect, incidental, consequential, or punitive damages.</li>
+            <li>Loss of profits, data, or business opportunities.</li>
+            <li>Errors or omissions in the content.</li>
+        </ul>
+        <p>Your use of the Site is at your sole risk.</p>
+
+        <h2>6. External Links</h2>
+        <p>BudgetPro may contain links to third-party websites. We do not endorse or assume responsibility for the content, privacy policies, or practices of these external sites.</p>
+
+        <h2>7. User-Generated Content</h2>
+        <p>You may have the opportunity to submit feedback, comments, or other content to BudgetPro. By submitting content, you grant us a non-exclusive, royalty-free, perpetual license to use, modify, and publish that content.</p>
+
+        <h2>8. Disclaimer of Warranties</h2>
+        <p>The Site and all content are provided "as is" and "as available" without any warranties, express or implied. We do not warrant that the Site will be uninterrupted, error-free, or free from viruses.</p>
+
+        <h2>9. Indemnification</h2>
+        <p>You agree to indemnify and hold BudgetPro harmless from any claims, losses, damages, or expenses arising from your use of the Site or violation of these Terms.</p>
+
+        <h2>10. Governing Law</h2>
+        <p>These Terms shall be governed by and construed in accordance with the laws of the Federal Republic of Nigeria. Any disputes arising under these Terms shall be subject to the exclusive jurisdiction of the courts of Nigeria.</p>
+
+        <h2>11. Termination</h2>
+        <p>We reserve the right to suspend or terminate your access to the Site at any time, without notice, for any reason, including violation of these Terms.</p>
+
+        <h2>12. Contact Us</h2>
+        <p>If you have any questions about these Terms of Service, please contact us:</p>
+        <ul>
+            <li><strong>Email:</strong> support@budgetpro.com.ng</li>
+            <li><strong>Website:</strong> <a href="https://budgetpro.com.ng">budgetpro.com.ng</a></li>
+        </ul>
+
+        <div class="legal-date">Last updated: August 31, 2026</div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container footer-inner">
+            <div class="copy">
+                &copy; 2026 <a href="index.html">BudgetPro</a> — Financial clarity for everyone.
+            </div>
+            <div class="footer-links">
+                <a href="privacy.html">Privacy</a>
+                <a href="terms.html">Terms</a>
+                <a href="blog.html">Blog</a>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

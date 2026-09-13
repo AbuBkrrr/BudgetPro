@@ -1,0 +1,24 @@
+{
+  "name": "budgetpro",
+  "version": "1.0.0",
+  "description": "Global financial calculators with admin blog system",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "astro": "^4.0.0",
+    "@astrojs/vercel": "^5.0.0",
+    "@supabase/supabase-js": "^2.39.0",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.5.33",
+    "bcryptjs": "^2.4.3"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.2",
+    "@types/jspdf": "^2.5.0",
+    "typescript": "^5.0.0"
+  }
+}

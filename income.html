@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="google-adsense-account" content="ca-pub-2229008759020664">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BudgetPro — Income &amp; SavingsPro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+  --navy-950: #0a1628;
+  --navy-900: #0e1d34;
+  --navy-850: #11223c;
+  --navy-800: #132846;
+  --navy-700: #1c3358;
+  --gold: #f5a623;
+  --gold-dim: #c8860f;
+  --gold-soft: rgba(245, 166, 35, 0.12);
+  --ink: #edf1f7;
+  --ink-muted: #8a96ac;
+  --ink-faint: #5c6883;
+  --line: rgba(245, 166, 35, 0.16);
+  --line-soft: rgba(255, 255, 255, 0.06);
+  --green: #3ddc97;
+  --red: #ef6a5f;
+  --display: "Space Grotesk", sans-serif;
+  --body: "Inter", sans-serif;
+  --mono: "IBM Plex Mono", monospace;
+}
+
+
+body.light-mode .global-nav {
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom-color: var(--line);
+}
+
+body.light-mode .sheet {
+  background: #ffffff;
+}
+
+body.light-mode .grand-card {
+  background: #ffffff;
+  border-color: var(--gold);
+}
+
+body.light-mode .manual-input,
+body.light-mode .num-field,
+body.light-mode .price-input {
+  background: #ffffff;
+  color: #1a1a2e;
+  border-color: var(--line);
+}
+
+body.light-mode .line-row:nth-child(even) {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+body.light-mode .subtotal-bar {
+  background: var(--navy-850);
+}
+
+body.light-mode .stat-card {
+  background: #ffffff;
+}
+
+body.light-mode .chart-card {
+  background: #ffffff;
+}
+
+body.light-mode .recommendations {
+  background: var(--gold-soft);
+}
+
+body.light-mode .topbar {
+  border-bottom-color: var(--line);
+}
+
+body.light-mode select#countrySelect {
+  background: #ffffff;
+  color: #1a1a2e;
+}
+
+body.light-mode .gn-link {
+  color: var(--ink-muted);
+}
+body.light-mode .gn-link:hover {
+  color: var(--ink);
+  background: var(--navy-850);
+}
+body.light-mode .gn-link.active {
+  color: var(--gold);
+  background: var(--gold-soft);
+}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--navy-950);
+    color:var(--ink);
+    font-family:var(--body);
+    min-height:100vh;
+    position:relative;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* growth-curve backdrop */
+  body::before{
+    content:"";
+    position:fixed;inset:0;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(245,166,35,.035) 0 1px, transparent 1px 42px),
+      repeating-linear-gradient(90deg, rgba(245,166,35,.035) 0 1px, transparent 1px 42px);
+    pointer-events:none;
+    z-index:0;
+  }
+  a{color:var(--gold);}
+  .wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 20px 80px;}
+
+  /* ---------- topbar ---------- */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:20px;
+    padding:22px 20px;border-bottom:1px solid var(--line);
+    max-width:1180px;margin:0 auto;position:relative;z-index:1;flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand .mark{
+    font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:.5px;color:var(--ink);
+  }
+  .brand .mark span{color:var(--gold);}
+  .brand .tagline{font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:.08em;text-transform:uppercase;}
+  .country-picker{display:flex;align-items:center;gap:10px;}
+  .country-picker label{font-family:var(--mono);font-size:11px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.06em;}
+  select#countrySelect{
+    background:var(--navy-850);color:var(--ink);border:1px solid var(--line);
+    border-radius:8px;padding:9px 14px;font-family:var(--body);font-size:14px;font-weight:600;
+    min-width:220px;cursor:pointer;
+  }
+  select#countrySelect:focus{outline:2px solid var(--gold);outline-offset:1px;}
+
+  /* ---------- section shell ---------- */
+  .sheet{
+    margin-top:34px;background:var(--navy-900);border:1px solid var(--line-soft);
+    border-radius:14px;padding:26px 26px 22px;position:relative;overflow:hidden;
+  }
+  .sheet::before{
+    content:"";position:absolute;top:0;left:0;width:100%;height:3px;
+    background:linear-gradient(90deg,var(--gold),transparent 70%);
+  }
+  .sheet-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:20px;flex-wrap:wrap;}
+  .sheet-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--gold);text-transform:uppercase;}
+  .sheet-title{font-family:var(--display);font-size:20px;font-weight:600;margin:4px 0 0;color:var(--ink);}
+  .sheet-sub{font-family:var(--body);font-size:13px;color:var(--ink-muted);margin-top:6px;max-width:560px;}
+  .sheet-num{font-family:var(--mono);font-size:11px;color:var(--ink-faint);border:1px solid var(--line);border-radius:20px;padding:5px 12px;white-space:nowrap;}
+
+  /* ---------- inputs panel ---------- */
+  .inputs-grid{display:grid;grid-template-columns:repeat(4, 1fr);gap:24px;}
+  .inputs-grid.cols3{grid-template-columns:repeat(3, 1fr);}
+  .field{display:flex;flex-direction:column;gap:10px;}
+  .field label{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-muted);display:flex;justify-content:space-between;}
+  .field label .val{color:var(--gold);font-weight:600;}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;
+    background:var(--navy-700);outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;
+    background:var(--gold);border:3px solid var(--navy-950);cursor:pointer;box-shadow:0 0 0 1px var(--gold);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:18px;height:18px;border-radius:50%;background:var(--gold);border:3px solid var(--navy-950);cursor:pointer;
+  }
+  .num-field{
+    background:var(--navy-800);border:1px solid var(--line);border-radius:8px;
+    color:var(--ink);font-family:var(--mono);font-size:14px;padding:10px 12px;width:100%;
+  }
+  .num-field:focus{outline:1px solid var(--gold);}
+  .segmented{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  .segmented button{flex:1 1 auto;min-width:70px;background:transparent;border:none;color:var(--ink-muted);font-family:var(--body);font-size:12.5px;font-weight:600;padding:9px 6px;cursor:pointer;border-right:1px solid var(--line);border-bottom:1px solid var(--line);transition:.15s;white-space:nowrap;}
+  .segmented button:last-child{border-right:none;}
+  .segmented button.active{background:var(--gold);color:var(--navy-950);}
+  .segmented button:hover:not(.active){background:var(--navy-800);color:var(--ink);}
+
+  /* ---------- line rows (shared pattern) ---------- */
+  .line-list{display:flex;flex-direction:column;gap:0;border:1px solid var(--line-soft);border-radius:10px;overflow:hidden;}
+  .line-row{
+    display:grid;grid-template-columns:1.6fr .9fr .9fr .9fr;gap:14px;align-items:center;
+    padding:13px 16px;border-bottom:1px solid var(--line-soft);
+  }
+  .line-row:last-child{border-bottom:none;}
+  .line-row:nth-child(even){background:rgba(255,255,255,.015);}
+  .line-row.negative .line-total{color:var(--red);}
+  .line-name{font-family:var(--body);font-weight:600;font-size:13.5px;}
+  .line-note{display:block;font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);font-weight:400;margin-top:3px;}
+  .line-meta{font-family:var(--mono);font-size:12px;color:var(--ink-muted);text-align:right;}
+  .line-total{font-family:var(--mono);font-size:13.5px;color:var(--gold);text-align:right;font-weight:600;}
+  .price-input{
+    width:110px;background:var(--navy-800);border:1px solid var(--line);border-radius:6px;
+    color:var(--gold);font-family:var(--mono);font-size:12.5px;padding:7px 9px;text-align:right;
+  }
+  .price-input::placeholder{color:var(--ink-faint);}
+  .price-input:focus{outline:1px solid var(--gold);}
+  .price-input.overridden{border-color:var(--gold);background:rgba(245,166,35,.08);}
+
+  .subtotal-bar{
+    display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding:14px 18px;
+    background:var(--navy-850);border:1px solid var(--line);border-radius:10px;
+  }
+  .subtotal-bar .label{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-muted);}
+  .subtotal-bar .amount{font-family:var(--display);font-size:19px;font-weight:700;color:var(--gold);}
+
+  /* ---------- 50/30/20 gauge ---------- */
+  .gauge-wrap{margin-top:4px;}
+  .gauge-bar{
+    position:relative;height:34px;border-radius:8px;overflow:hidden;display:flex;
+    border:1px solid var(--line);
+  }
+  .gauge-seg{height:100%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--navy-950);transition:width .3s;white-space:nowrap;overflow:hidden;}
+  .gauge-seg.needs{background:var(--gold);}
+  .gauge-seg.wants{background:var(--blue);color:var(--ink);}
+  .gauge-seg.savings{background:var(--green);}
+  .gauge-target-marks{position:relative;height:16px;margin-top:4px;}
+  .gauge-target-marks .mark{
+    position:absolute;top:0;width:1px;height:100%;background:var(--ink-faint);
+  }
+  .gauge-target-marks .mark-label{
+    position:absolute;top:2px;transform:translateX(-50%);font-family:var(--mono);font-size:9.5px;color:var(--ink-faint);white-space:nowrap;
+  }
+  .gauge-legend{display:flex;gap:20px;margin-top:14px;flex-wrap:wrap;}
+  .gauge-legend .gl-item{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;color:var(--ink-muted);}
+  .gl-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+  .gauge-legend b{color:var(--ink);}
+  .gauge-status{margin-top:14px;padding:10px 14px;border-radius:8px;font-family:var(--mono);font-size:11.5px;border:1px solid var(--line);}
+  .gauge-status.ok{color:var(--green);border-color:var(--green);background:var(--green-soft);}
+  .gauge-status.warn{color:var(--red);border-color:var(--red);background:var(--red-soft);}
+
+  /* ---------- stat cards ---------- */
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px;}
+  .stat-card{background:var(--navy-850);border:1px solid var(--line);border-radius:12px;padding:18px 20px;}
+  .stat-card .st-label{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-muted);}
+  .stat-card .st-value{font-family:var(--display);font-size:24px;font-weight:700;color:var(--gold);margin-top:8px;}
+  .stat-card .st-note{font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-top:4px;}
+  .stat-card.positive .st-value{color:var(--green);}
+
+  .chart-block{background:var(--navy-850);border:1px solid var(--line-soft);border-radius:12px;padding:18px;margin-top:20px;}
+  .chart-block .cb-title{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-muted);margin-bottom:12px;}
+
+  /* ---------- inflation trap banner ---------- */
+  .warning-banner{
+    display:flex;align-items:center;gap:12px;margin-top:16px;padding:14px 18px;
+    background:var(--red-soft);border:1px solid var(--red);border-radius:10px;
+  }
+  .warning-banner .icon{font-size:18px;flex-shrink:0;}
+  .warning-banner .msg{font-family:var(--body);font-weight:600;font-size:13.5px;color:var(--red);}
+  .warning-banner .msg small{display:block;font-family:var(--mono);font-weight:400;font-size:11.5px;color:#f2a49d;margin-top:3px;}
+
+  /* ---------- summary ---------- */
+  .summary-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:start;}
+  .grand-card{
+    background:linear-gradient(160deg,var(--navy-850),var(--navy-900));border:1px solid var(--gold);
+    border-radius:14px;padding:30px;text-align:center;
+  }
+  .grand-card .g-label{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);}
+  .grand-card .g-amount{font-family:var(--display);font-size:40px;font-weight:700;color:var(--ink);margin:10px 0 6px;word-break:break-word;}
+  .grand-card .g-sub{font-family:var(--mono);font-size:12px;color:var(--ink-muted);}
+  .breakdown-legend{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px;text-align:left;}
+  .legend-item{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;color:var(--ink-muted);}
+  .legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+  .legend-item b{color:var(--ink);font-weight:600;margin-left:auto;}
+  .chart-card{background:var(--navy-850);border:1px solid var(--line-soft);border-radius:14px;padding:20px;}
+  .reset-btn{
+    margin-top:18px;width:100%;background:transparent;border:1px solid var(--line);color:var(--ink-muted);
+    font-family:var(--mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;padding:11px;border-radius:8px;cursor:pointer;
+  }
+  .reset-btn:hover{border-color:var(--red);color:var(--red);}
+  .pdf-btn{
+    margin-top:10px;width:100%;background:var(--gold-soft);border:1px solid var(--gold);color:var(--gold);
+    font-family:var(--mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;padding:11px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s;
+  }
+  .pdf-btn:hover{background:var(--gold);color:var(--navy-950);}
+  .pdf-btn:disabled{opacity:.5;cursor:wait;}
+
+  .foot-note{margin-top:40px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--ink-faint);line-height:1.7;}
+
+  @media(max-width:900px){
+    .inputs-grid{grid-template-columns:1fr 1fr;}
+    .inputs-grid.cols3{grid-template-columns:1fr 1fr;}
+    .summary-grid{grid-template-columns:1fr;}
+    .stat-grid{grid-template-columns:1fr;}
+    .line-row{grid-template-columns:1.3fr 1fr 1fr;}
+    .line-row .col-price{display:none;}
+  }
+  @media(max-width:560px){
+    .inputs-grid{grid-template-columns:1fr;}
+    .sheet{padding:20px 16px;}
+    .grand-card .g-amount{font-size:30px;}
+  }
+
+  /* ===================== GLOBAL STICKY NAV (identical on every page) ===================== */
+  .global-nav{position:sticky;top:0;z-index:100;background:rgba(10,22,40,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+  .gn-inner{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:18px;padding:12px 20px;}
+  .gn-logo{font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:.4px;color:var(--ink);text-decoration:none;flex-shrink:0;white-space:nowrap;}
+  .gn-logo span{color:var(--gold);}
+  .gn-links{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;}
+  .gn-links::-webkit-scrollbar{display:none;}
+  .gn-link{
+    display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;
+    font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink-muted);
+    text-decoration:none;padding:8px 12px;border-radius:8px;transition:.15s;border:1px solid transparent;
+  }
+  .gn-link:hover{color:var(--ink);background:var(--navy-850);}
+  .gn-link.active{color:var(--gold);background:var(--gold-soft);border-color:var(--line);}
+  .gn-emoji{font-size:14px;}
+  @media(max-width:720px){
+    .gn-link .gn-text{display:none;}
+    .gn-link{padding:8px 10px;}
+    .gn-logo{font-size:14px;}
+  }
+
+  .manual-input{
+    margin-top:8px;width:100%;background:var(--navy-800);border:1px solid var(--line);
+    border-radius:6px;color:var(--gold);font-family:var(--mono);font-size:12.5px;
+    padding:7px 9px;text-align:center;
+  }
+  .manual-input:focus{outline:1px solid var(--gold);}
+</style>
+</head>
+<body>
+
+<header class="global-nav">
+  <div class="gn-inner">
+    <a href="index.html" class="gn-logo">BUDGET<span>PRO</span></a>
+    <nav class="gn-links">
+      <a href="mortgage.html" class="gn-link"><span class="gn-emoji">🏠</span><span class="gn-text">Mortgage</span></a>
+      <a href="auto.html" class="gn-link"><span class="gn-emoji">🚗</span><span class="gn-text">Auto</span></a>
+      <a href="construction.html" class="gn-link"><span class="gn-emoji">🏗️</span><span class="gn-text">Construction</span></a>
+      <a href="solar.html" class="gn-link"><span class="gn-emoji">☀️</span><span class="gn-text">Solar</span></a>
+      <a href="business.html" class="gn-link"><span class="gn-emoji">🏢</span><span class="gn-text">Business</span></a>
+      <a href="income.html" class="gn-link active"><span class="gn-emoji">💰</span><span class="gn-text">Savings</span></a>
+    </nav>
+  </div>
+</header>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="mark">BUDGET<span>PRO</span></span>
+    <span class="tagline">Income &amp; SavingsPro</span>
+  </div>
+  <div class="country-picker">
+    <label for="countrySelect">Country</label>
+    <select id="countrySelect"></select>
+    
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- INCOME PARAMETERS -->
+  <section class="sheet" id="paramsSheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Income Parameters</div>
+        <div class="sheet-title">Define your income</div>
+      </div>
+      <div class="sheet-num">SHEET 00 / 03</div>
+    </div>
+    <div class="inputs-grid">
+      <div class="field">
+        <label>Gross Salary <span class="val" id="salaryVal">75,000</span></label>
+        <div class="segmented" id="salaryModeSeg" style="margin-bottom:10px;">
+          <button data-mode="monthly">Monthly</button>
+          <button data-mode="annual" class="active">Annual</button>
+        </div>
+        <input type="range" id="salarySlider" min="10000" max="5000000" step="1000" value="75000">
+        <input type="number" class="manual-input" id="salaryManual" min="10000" max="5000000" step="1000" value="75000" aria-label="salary manual entry">
+      </div>
+      <div class="field" id="stateTaxField">
+        <label>State Tax Rate (flat, editable) <span class="val" id="stateTaxVal">5%</span></label>
+        <input type="range" id="stateTaxSlider" min="0" max="15" step="0.1" value="5">
+        <input type="number" class="manual-input" id="stateTaxManual" min="0" max="15" step="0.1" value="5" aria-label="stateTax manual entry">
+      </div>
+    </div>
+  </section>
+
+  <!-- PHASE 1 -->
+  <section class="sheet" id="phase1Sheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Phase 01 — Setup</div>
+        <div class="sheet-title" id="phase1Title">Net Annual Income</div>
+        <div class="sheet-sub" id="phase1Sub">Federal/national brackets are hardcoded for US and UK; other countries use an editable flat estimated rate.</div>
+      </div>
+      <div class="sheet-num">SHEET 01 / 03</div>
+    </div>
+    <div class="line-list" id="phase1List"></div>
+    <div class="subtotal-bar">
+      <span class="label">Net Annual Income</span>
+      <span class="amount" id="netAnnualBar">—</span>
+    </div>
+  </section>
+
+  <!-- PHASE 2 -->
+  <section class="sheet" id="phase2Sheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Phase 02 — Handover</div>
+        <div class="sheet-title">The 50/30/20 Budget Rule</div>
+        <div class="sheet-sub">Enter your actual monthly spend in each bucket — the gauge shows how it compares to the 50% Needs / 30% Wants / 20% Savings target.</div>
+      </div>
+      <div class="sheet-num">SHEET 02 / 03</div>
+    </div>
+    <div class="inputs-grid cols3">
+      <div class="field">
+        <label>Monthly Needs</label>
+        <input type="number" class="num-field" id="needsInput" value="2200" min="0" step="25">
+      </div>
+      <div class="field">
+        <label>Monthly Wants</label>
+        <input type="number" class="num-field" id="wantsInput" value="1300" min="0" step="25">
+      </div>
+      <div class="field">
+        <label>Monthly Savings</label>
+        <input type="number" class="num-field" id="savingsInput" value="800" min="0" step="25">
+      </div>
+    </div>
+
+    <div class="gauge-wrap">
+      <div class="gauge-bar" id="gaugeBar"></div>
+      <div class="gauge-target-marks" id="gaugeMarks"></div>
+      <div class="gauge-legend" id="gaugeLegend"></div>
+      <div class="gauge-status" id="gaugeStatus"></div>
+    </div>
+  </section>
+
+  <!-- PHASE 3 -->
+  <section class="sheet" id="phase3Sheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Phase 03 — Future Burn</div>
+        <div class="sheet-title">Savings Rate, Compound Growth &amp; FI Number</div>
+        <div class="sheet-sub">Future Value = P(1+r)ⁿ + PMT[((1+r)ⁿ−1)/r], compounded annually using your monthly Savings as the annual contribution.</div>
+      </div>
+      <div class="sheet-num">SHEET 03 / 03</div>
+    </div>
+
+    <div class="inputs-grid cols3">
+      <div class="field">
+        <label>Current Savings / Investments</label>
+        <input type="number" class="num-field" id="currentSavingsInput" value="10000" min="0" step="500">
+      </div>
+      <div class="field">
+        <label>Expected Annual Return <span class="val" id="returnRateVal">7%</span></label>
+        <input type="range" id="returnRateSlider" min="0" max="15" step="0.1" value="7">
+        <input type="number" class="manual-input" id="returnRateManual" min="0" max="15" step="0.1" value="7" aria-label="returnRate manual entry">
+      </div>
+      <div class="field">
+        <label>Years to Project <span class="val" id="yearsVal">30</span></label>
+        <input type="range" id="yearsSlider" min="1" max="50" step="1" value="30">
+        <input type="number" class="manual-input" id="yearsManual" min="1" max="50" step="1" value="30" aria-label="years manual entry">
+      </div>
+    </div>
+    <div class="inputs-grid cols3" style="margin-top:20px;">
+      <div class="field">
+        <label>Assumed Inflation Rate <span class="val" id="inflationVal">3%</span></label>
+        <input type="range" id="inflationSlider" min="0" max="10" step="0.1" value="3">
+        <input type="number" class="manual-input" id="inflationManual" min="0" max="10" step="0.1" value="3" aria-label="inflation manual entry">
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card positive">
+        <div class="st-label">Savings Rate</div>
+        <div class="st-value" id="savingsRateStat">—</div>
+        <div class="st-note">of net monthly income</div>
+      </div>
+      <div class="stat-card">
+        <div class="st-label">Future Value (nominal)</div>
+        <div class="st-value" id="futureValueStat">—</div>
+        <div class="st-note" id="futureValueNote">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="st-label">FI Number</div>
+        <div class="st-value" id="fiNumberStat">—</div>
+        <div class="st-note">Annual spend (Needs+Wants) × 25</div>
+      </div>
+    </div>
+
+    <div class="warning-banner" id="inflationBanner">
+      <span class="icon">📉</span>
+      <span class="msg">Inflation is quietly eating your future balance.
+        <small id="inflationDetail"></small>
+      </span>
+    </div>
+
+    <div class="chart-block">
+      <div class="cb-title">Nominal vs. Inflation-Adjusted Growth</div>
+      <canvas id="growthChart" height="90"></canvas>
+    </div>
+  </section>
+
+  <!-- SUMMARY -->
+  <section class="sheet" id="summarySheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Grand Summary</div>
+        <div class="sheet-title">Where your income goes</div>
+      </div>
+    </div>
+    <div class="summary-grid">
+      <div class="grand-card">
+        <div class="g-label">Net Annual Income</div>
+        <div class="g-amount" id="grandTotal">—</div>
+        <div class="g-sub">after tax, before your own budgeting choices</div>
+        <div class="breakdown-legend" id="legend"></div>
+      </div>
+      <div class="chart-card">
+        <canvas id="breakdownChart" height="260"></canvas>
+        <button class="reset-btn" id="resetBtn">Reset all overrides for this country</button>
+        <button class="pdf-btn" id="pdfBtn">📄 Download PDF Summary</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot-note">
+    US federal and UK income-tax bands are hardcoded 2026 single-filer estimates; state/national rates elsewhere are editable flat approximations, not live tax tables — confirm with a tax advisor before filing.<br>
+    Your custom rates are saved to this browser automatically and reload with the page.
+  <br><br>A product of AI Brains Ventures — <a href="http://www.aibrainsventures.is-great.net/" target="_blank" rel="noopener">www.aibrainsventures.is-great.net</a></div>
+
+</div>
+
+<script src="countryData.js"></script>
+<script>
+
+/* ---------------- hardcoded bracket tables (2026 single-filer estimates) ---------------- */
+// US Federal — marginal brackets, [upTo, rate]. Last bracket upTo = Infinity.
+const US_FEDERAL_BRACKETS = [
+  { upTo: 11925,   rate: 0.10 },
+  { upTo: 48475,   rate: 0.12 },
+  { upTo: 103350,  rate: 0.22 },
+  { upTo: 197300,  rate: 0.24 },
+  { upTo: 250525,  rate: 0.32 },
+  { upTo: 626350,  rate: 0.35 },
+  { upTo: Infinity,rate: 0.37 },
+];
+// UK — Personal Allowance + bands (England/Wales/NI rates; ignores allowance taper above £100k)
+const UK_BANDS = [
+  { upTo: 12570,   rate: 0.00 },
+  { upTo: 50270,   rate: 0.20 },
+  { upTo: 125140,  rate: 0.40 },
+  { upTo: Infinity,rate: 0.45 },
+];
+
+function marginalTax(income, brackets){
+  let tax = 0, lower = 0;
+  for(const b of brackets){
+    if(income <= lower) break;
+    const taxable = Math.min(income, b.upTo) - lower;
+    tax += taxable * b.rate;
+    lower = b.upTo;
+    if(income <= b.upTo) break;
+  }
+  return tax;
+}
+
+/* ---------------- state ---------------- */
+const STORE_KEY = 'budgetpro_income_v1';
+let store = loadStore();
+let lastSummary = {};
+
+let state = {
+  country: store.settings.country || 'US',
+  salary: store.settings.salary ?? 75000,
+  salaryMode: store.settings.salaryMode || 'annual',
+  stateTaxRate: store.settings.stateTaxRate ?? 5,
+  needs: store.settings.needs ?? 2200,
+  wants: store.settings.wants ?? 1300,
+  savings: store.settings.savings ?? 800,
+  currentSavings: store.settings.currentSavings ?? 10000,
+  returnRate: store.settings.returnRate ?? 7,
+  years: store.settings.years ?? 30,
+  inflation: store.settings.inflation ?? 3,
+};
+
+function loadStore(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){ /* ignore corrupt storage */ }
+  return { settings:{}, overrides:{} };
+}
+function saveStore(){
+  localStorage.setItem(STORE_KEY, JSON.stringify(store));
+}
+function getOverride(category, key){
+  const c = store.overrides[state.country];
+  if(!c) return undefined;
+  const v = c[category + '.' + key];
+  return (v === undefined || v === null || v === '') ? undefined : v;
+}
+function setOverride(category, key, value){
+  if(!store.overrides[state.country]) store.overrides[state.country] = {};
+  const k = category + '.' + key;
+  if(value === '' || value === null || value === undefined || isNaN(value)){
+    delete store.overrides[state.country][k];
+  }else{
+    store.overrides[state.country][k] = Number(value);
+  }
+  saveStore();
+}
+
+/* ---------------- helpers ---------------- */
+function cd(){ return countryData[state.country]; }
+function sym(){ return cd().currencySymbol; }
+function fmtMoney(v){
+  const sign = v < 0 ? '-' : '';
+  return sign + sym() + Math.round(Math.abs(v)).toLocaleString(undefined,{maximumFractionDigits:0});
+}
+
+/* Keep a manual-entry number input in sync with its slider/state, unless the
+   user currently has that field focused (so we never fight their typing). */
+function syncManual(id, value){
+  const el = document.getElementById(id);
+  if(el && document.activeElement !== el) el.value = value;
+}
+/* Wire a manual number input to drive the same state as its paired slider. */
+function bindManual(manualId, sliderId, setter){
+  const manual = document.getElementById(manualId);
+  const slider = document.getElementById(sliderId);
+  if(!manual || !slider) return;
+  manual.addEventListener('input', () => {
+    const raw = manual.value;
+    if(raw === '' || raw === '-' || raw === '.') return;
+    const num = Number(raw);
+    if(isNaN(num)) return;
+    const min = Number(slider.min), max = Number(slider.max);
+    const clamped = Math.min(max, Math.max(min, num));
+    slider.value = clamped;
+    setter(num);
+  });
+  manual.addEventListener('change', () => {
+    const min = Number(slider.min), max = Number(slider.max);
+    let num = Number(manual.value);
+    if(isNaN(num)) num = Number(slider.value);
+    num = Math.min(max, Math.max(min, num));
+    setter(num);
+  });
+}
+
+/* Salary slider/manual bounds switch depending on whether the person is
+   entering a monthly or annual figure. */
+function applySalaryModeBounds(){
+  const slider = document.getElementById('salarySlider');
+  const manual = document.getElementById('salaryManual');
+  if(state.salaryMode === 'monthly'){
+    slider.min = manual.min = 800;
+    slider.max = manual.max = Math.round(5000000/12);
+    slider.step = manual.step = 100;
+  }else{
+    slider.min = manual.min = 10000;
+    slider.max = manual.max = 5000000;
+    slider.step = manual.step = 1000;
+  }
+}
+
+/* ---------------- populate country dropdown ---------------- */
+function populateCountries(){
+  const sel = document.getElementById('countrySelect');
+  const regions = {};
+  countryList.forEach(c => { (regions[c.region] ||= []).push(c); });
+  sel.innerHTML = '';
+  Object.keys(regions).sort().forEach(region => {
+    const og = document.createElement('optgroup');
+    og.label = region;
+    regions[region].forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.code;
+      opt.textContent = `${c.name} (${c.currencySymbol})`;
+      og.appendChild(opt);
+    });
+    sel.appendChild(og);
+  });
+  sel.value = state.country;
+}
+
+function makeLineRow(name, note, qtyLabel, unitPrice, cat, key, amount, editable, negative){
+  const override = getOverride(cat, key);
+  const priceCell = editable ? `
+    <div class="line-meta col-price">
+      <input type="number" class="price-input ${override!==undefined?'overridden':''}" data-cat="${cat}" data-key="${key}"
+             placeholder="${unitPrice}"
+             value="${override!==undefined?override:''}"
+             step="any">
+    </div>` : `<div class="line-meta col-price">—</div>`;
+  const row = document.createElement('div');
+  row.className = 'line-row' + (negative ? ' negative' : '');
+  row.innerHTML = `
+    <div><div class="line-name">${name}</div><span class="line-note">${note}</span></div>
+    <div class="line-meta">${qtyLabel}</div>
+    ${priceCell}
+    <div class="line-total">${negative?'−':''}${fmtMoney(Math.abs(amount))}</div>
+  `;
+  return row;
+}
+
+/* ---------------- Phase 1: Tax & Net Income ---------------- */
+function renderPhase1(){
+  const list = document.getElementById('phase1List');
+  list.innerHTML = '';
+  const salary = state.salary;
+  const isUS = state.country === 'US';
+  const isUK = state.country === 'GB';
+  const stateTaxField = document.getElementById('stateTaxField');
+  stateTaxField.style.display = isUS ? 'flex' : 'none';
+
+  let totalTax = 0;
+
+  // base salary row
+  list.appendChild(makeLineRow('Gross Annual Salary', 'entered above', '—', 0, '_', '_', salary, false, false));
+
+  if(isUS){
+    document.getElementById('phase1Sub').textContent = 'US federal brackets are hardcoded (2026 single-filer estimate); state tax is a flat editable rate.';
+    const fedTax = marginalTax(salary, US_FEDERAL_BRACKETS);
+    const topBracket = US_FEDERAL_BRACKETS.find(b => salary <= b.upTo) || US_FEDERAL_BRACKETS[US_FEDERAL_BRACKETS.length-1];
+    list.appendChild(makeLineRow('Federal Income Tax', `marginal brackets, top rate ${(topBracket.rate*100).toFixed(0)}%`, 'brackets', 0, '_', '_', fedTax, false, true));
+    totalTax += fedTax;
+
+    const stateTax = salary * (state.stateTaxRate/100);
+    list.appendChild(makeLineRow('State Income Tax', `flat ${state.stateTaxRate}% (editable — varies by state)`, `${state.stateTaxRate}%`, 0, '_', '_', stateTax, false, true));
+    totalTax += stateTax;
+
+  }else if(isUK){
+    document.getElementById('phase1Sub').textContent = 'UK income tax bands are hardcoded (2026 estimate, England/Wales/NI, excludes National Insurance).';
+    const ukTax = marginalTax(salary, UK_BANDS);
+    const topBand = UK_BANDS.find(b => salary <= b.upTo) || UK_BANDS[UK_BANDS.length-1];
+    list.appendChild(makeLineRow('UK Income Tax', `marginal bands, top rate ${(topBand.rate*100).toFixed(0)}%`, 'bands', 0, '_', '_', ukTax, false, true));
+    totalTax += ukTax;
+
+  }else{
+    const isFlatMandated = (state.country === 'NG' || state.country === 'IN');
+    document.getElementById('phase1Sub').textContent = isFlatMandated
+      ? 'A flat national tax rate is used for this country, as specified — editable below.'
+      : 'This country uses an editable flat estimated income-tax rate (no bracket table hardcoded).';
+    const baseRate = cd().income.flatRate;
+    const ov = getOverride('income','flatRate');
+    const rate = ov !== undefined ? ov/100 : baseRate;
+    const flatTax = salary * rate;
+    list.appendChild(makeLineRow('Income Tax (flat rate)', `${(rate*100).toFixed(1)}% flat national rate`, 'flat', baseRate*100, 'income','flatRate', flatTax, true, true));
+    totalTax += flatTax;
+  }
+
+  const netAnnual = salary - totalTax;
+  document.getElementById('netAnnualBar').textContent = fmtMoney(netAnnual);
+  return { salary, totalTax, netAnnual };
+}
+
+/* ---------------- Phase 2: 50/30/20 gauge ---------------- */
+function renderPhase2(netAnnual){
+  const netMonthly = netAnnual / 12;
+  const needs = state.needs, wants = state.wants, savings = state.savings;
+  const spentTotal = needs + wants + savings;
+  const base = Math.max(netMonthly, spentTotal, 1);
+
+  const needsPct = (needs/base)*100;
+  const wantsPct = (wants/base)*100;
+  const savingsPct = (savings/base)*100;
+  const unallocated = Math.max(0, 100 - needsPct - wantsPct - savingsPct);
+
+  const bar = document.getElementById('gaugeBar');
+  bar.innerHTML = `
+    <div class="gauge-seg needs" style="width:${needsPct}%">${needsPct>=8?needsPct.toFixed(0)+'%':''}</div>
+    <div class="gauge-seg wants" style="width:${wantsPct}%">${wantsPct>=8?wantsPct.toFixed(0)+'%':''}</div>
+    <div class="gauge-seg savings" style="width:${savingsPct}%">${savingsPct>=8?savingsPct.toFixed(0)+'%':''}</div>
+    ${unallocated>0.5 ? `<div class="gauge-seg" style="width:${unallocated}%;background:var(--navy-700);color:var(--ink-faint);">${unallocated>=8?unallocated.toFixed(0)+'%':''}</div>` : ''}
+  `;
+  const marks = document.getElementById('gaugeMarks');
+  marks.innerHTML = `
+    <div class="mark" style="left:50%;"></div><div class="mark-label" style="left:50%;">50%</div>
+    <div class="mark" style="left:80%;"></div><div class="mark-label" style="left:80%;">80%</div>
+  `;
+
+  const legend = document.getElementById('gaugeLegend');
+  const needsDiff = needsPct-50, wantsDiff = wantsPct-30, savingsDiff = savingsPct-20;
+  legend.innerHTML = `
+    <div class="gl-item"><span class="gl-dot" style="background:var(--gold)"></span>Needs <b>${needsPct.toFixed(1)}%</b> (target 50%, ${needsDiff>=0?'+':''}${needsDiff.toFixed(1)}pt)</div>
+    <div class="gl-item"><span class="gl-dot" style="background:var(--blue)"></span>Wants <b>${wantsPct.toFixed(1)}%</b> (target 30%, ${wantsDiff>=0?'+':''}${wantsDiff.toFixed(1)}pt)</div>
+    <div class="gl-item"><span class="gl-dot" style="background:var(--green)"></span>Savings <b>${savingsPct.toFixed(1)}%</b> (target 20%, ${savingsDiff>=0?'+':''}${savingsDiff.toFixed(1)}pt)</div>
+  `;
+
+  const statusEl = document.getElementById('gaugeStatus');
+  const overspending = needsPct > 55 || wantsPct > 35 || savingsPct < 15;
+  if(overspending){
+    statusEl.className = 'gauge-status warn';
+    statusEl.textContent = `Off target — ${needsPct>55?'Needs is running high. ':''}${wantsPct>35?'Wants is running high. ':''}${savingsPct<15?'Savings is running low.':''}`;
+  }else{
+    statusEl.className = 'gauge-status ok';
+    statusEl.textContent = 'On track — your split is close to the 50/30/20 target.';
+  }
+
+  return { needsPct, wantsPct, savingsPct, netMonthly };
+}
+
+/* ---------------- Phase 3: Savings rate, compound growth, FI number ---------------- */
+let growthChart, breakdownChart;
+
+function renderPhase3(netAnnual){
+  const netMonthly = netAnnual/12;
+  const savingsRate = netMonthly > 0 ? (state.savings/netMonthly)*100 : 0;
+  document.getElementById('savingsRateStat').textContent = `${savingsRate.toFixed(1)}%`;
+
+  const P = state.currentSavings;
+  const r = state.returnRate/100;
+  const n = state.years;
+  const PMT = state.savings * 12; // annual contribution from monthly savings
+
+  const growthFactor = Math.pow(1+r, n);
+  const FV = r > 0
+    ? P*growthFactor + PMT*((growthFactor-1)/r)
+    : P + PMT*n;
+
+  document.getElementById('futureValueStat').textContent = fmtMoney(FV);
+  document.getElementById('futureValueNote').textContent = `after ${n} yrs at ${state.returnRate}% return`;
+
+  // FI Number = Annual Expenses (Needs+Wants) x 25
+  const annualExpenses = (state.needs + state.wants) * 12;
+  const fiNumber = annualExpenses * 25;
+  document.getElementById('fiNumberStat').textContent = fmtMoney(fiNumber);
+
+  // inflation-adjusted trap
+  const inflRate = state.inflation/100;
+  const realValue = inflRate > 0 ? FV / Math.pow(1+inflRate, n) : FV;
+  document.getElementById('inflationDetail').textContent =
+    `In ${n} years, your ${fmtMoney(FV)} will only be worth ${fmtMoney(realValue)} in today's dollars, assuming ${state.inflation}% annual inflation.`;
+
+  // year-by-year projection for the chart
+  const nominal = [], real = [];
+  let cum = P;
+  for(let y=0; y<=n; y++){
+    if(y>0){
+      cum = r>0 ? cum*(1+r) + PMT : cum + PMT;
+    }
+    nominal.push(cum);
+    real.push(inflRate>0 ? cum/Math.pow(1+inflRate,y) : cum);
+  }
+
+  const ctx = document.getElementById('growthChart');
+  const labels = nominal.map((_,i)=>`Yr ${i}`);
+  const data = {
+    labels,
+    datasets:[
+      { label:'Nominal', data:nominal, borderColor:'#f5a623', backgroundColor:'rgba(245,166,35,.10)', fill:true, tension:.2, pointRadius:0, borderWidth:2 },
+      { label:'Inflation-Adjusted', data:real, borderColor:'#ef6a5f', backgroundColor:'rgba(239,106,95,.08)', fill:true, tension:.2, pointRadius:0, borderWidth:2, borderDash:[4,3] },
+    ]
+  };
+  if(growthChart){ growthChart.data = data; growthChart.update(); }
+  else{
+    growthChart = new Chart(ctx, {
+      type:'line',
+      data,
+      options:{
+        plugins:{ legend:{ display:true, labels:{ color:'#8a96ac', font:{family:'IBM Plex Mono',size:10.5} } }, tooltip:{ callbacks:{ label:(c)=> `${c.dataset.label}: ${fmtMoney(c.raw)}` } } },
+        scales:{
+          x:{ ticks:{ color:'#5c6883', maxTicksLimit:9, font:{family:'IBM Plex Mono',size:10} }, grid:{ color:'rgba(255,255,255,.04)' } },
+          y:{ ticks:{ color:'#5c6883', font:{family:'IBM Plex Mono',size:10}, callback:(v)=>sym()+Math.round(v/1000)+'k' }, grid:{ color:'rgba(255,255,255,.04)' } }
+        }
+      }
+    });
+  }
+
+  return { savingsRate, FV, realValue, fiNumber, annualExpenses };
+}
+
+/* ---------------- Summary ---------------- */
+function renderSummary(p1, p2){
+  document.getElementById('grandTotal').textContent = fmtMoney(p1.netAnnual);
+
+  const slices = [
+    { label:'Needs (monthly)',   value: state.needs,   color:'#f5a623' },
+    { label:'Wants (monthly)',   value: state.wants,   color:'#5b8def' },
+    { label:'Savings (monthly)', value: state.savings, color:'#3ddc97' },
+    { label:'Tax (annual)',      value: p1.totalTax,   color:'#ef6a5f' },
+  ];
+
+  const legend = document.getElementById('legend');
+  legend.innerHTML = slices.map(s => `
+    <div class="legend-item">
+      <span class="legend-dot" style="background:${s.color}"></span>
+      ${s.label} <b>${fmtMoney(s.value)}</b>
+    </div>
+  `).join('');
+
+  const ctx = document.getElementById('breakdownChart');
+  const data = {
+    labels: ['Needs','Wants','Savings'],
+    datasets: [{ data: [state.needs, state.wants, state.savings], backgroundColor: ['#f5a623','#5b8def','#3ddc97'], borderColor:'#0e1d34', borderWidth:2 }]
+  };
+  if(breakdownChart){ breakdownChart.data = data; breakdownChart.update(); }
+  else{
+    breakdownChart = new Chart(ctx, {
+      type:'doughnut',
+      data,
+      options:{
+        plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:(c)=> `${c.label}: ${fmtMoney(c.raw)}` } } },
+        cutout:'62%'
+      }
+    });
+  }
+}
+
+/* ---------------- master render ---------------- */
+/* ---------------- master render ---------------- */
+function renderAll(){
+  const salaryDisplayVal = state.salaryMode === 'monthly' ? Math.round(state.salary/12) : state.salary;
+  document.getElementById('salaryVal').textContent = `${salaryDisplayVal.toLocaleString()} / ${state.salaryMode === 'monthly' ? 'mo' : 'yr'}`;
+  syncManual('salaryManual', salaryDisplayVal);
+  document.getElementById('stateTaxVal').textContent = `${state.stateTaxRate}%`;
+  document.getElementById('returnRateVal').textContent = `${state.returnRate}%`;
+  document.getElementById('yearsVal').textContent = state.years;
+  document.getElementById('inflationVal').textContent = `${state.inflation}%`;
+
+  const p1 = renderPhase1();
+  const p2 = renderPhase2(p1.netAnnual);
+  const p3 = renderPhase3(p1.netAnnual);
+  renderSummary(p1, p2);
+
+  const netMonthly = p1.netAnnual / 12;
+  const needsPct = netMonthly > 0 ? (state.needs / netMonthly) * 100 : 0;
+  const wantsPct = netMonthly > 0 ? (state.wants / netMonthly) * 100 : 0;
+  const savingsPct = netMonthly > 0 ? (state.savings / netMonthly) * 100 : 0;
+
+  lastSummary = {
+    country: state.country,
+    salaryMode: state.salaryMode,
+    grossSalary: state.salary,
+    stateTaxRate: state.stateTaxRate,
+    needs: state.needs,
+    wants: state.wants,
+    savings: state.savings,
+    currentSavings: state.currentSavings,
+    returnRate: state.returnRate,
+    years: state.years,
+    inflation: state.inflation,
+    totalTax: p1.totalTax,
+    netAnnual: p1.netAnnual,
+    netMonthly: netMonthly,
+    needsPct: needsPct,
+    wantsPct: wantsPct,
+    savingsPct: savingsPct,
+    savingsRate: p3.savingsRate,
+    FV: p3.FV,
+    realValue: p3.realValue,
+    fiNumber: p3.fiNumber,
+    annualExpenses: p3.annualExpenses,
+    currencySymbol: cd().currencySymbol,
+    countryName: cd().name
+  };
+
+  store.settings = {
+    country: state.country, salary: state.salary, salaryMode: state.salaryMode, stateTaxRate: state.stateTaxRate,
+    needs: state.needs, wants: state.wants, savings: state.savings,
+    currentSavings: state.currentSavings, returnRate: state.returnRate,
+    years: state.years, inflation: state.inflation
+  };
+  saveStore();
+}
+
+/* ---------------- events ---------------- */
+document.getElementById('countrySelect').addEventListener('change', e => {
+  state.country = e.target.value;
+  renderAll();
+});
+document.getElementById('salarySlider').addEventListener('input', e => {
+  const entered = Number(e.target.value);
+  state.salary = state.salaryMode === 'monthly' ? entered*12 : entered;
+  renderAll();
+});
+document.getElementById('salaryModeSeg').addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  state.salaryMode = btn.dataset.mode;
+  document.querySelectorAll('#salaryModeSeg button').forEach(b=>b.classList.toggle('active', b===btn));
+  applySalaryModeBounds();
+  renderAll();
+});
+document.getElementById('stateTaxSlider').addEventListener('input', e => {
+  state.stateTaxRate = Number(e.target.value);
+  renderAll();
+});
+document.getElementById('needsInput').addEventListener('input', e => {
+  state.needs = Number(e.target.value) || 0;
+  renderAll();
+});
+document.getElementById('wantsInput').addEventListener('input', e => {
+  state.wants = Number(e.target.value) || 0;
+  renderAll();
+});
+document.getElementById('savingsInput').addEventListener('input', e => {
+  state.savings = Number(e.target.value) || 0;
+  renderAll();
+});
+document.getElementById('currentSavingsInput').addEventListener('input', e => {
+  state.currentSavings = Number(e.target.value) || 0;
+  renderAll();
+});
+document.getElementById('returnRateSlider').addEventListener('input', e => {
+  state.returnRate = Number(e.target.value);
+  renderAll();
+});
+document.getElementById('yearsSlider').addEventListener('input', e => {
+  state.years = Number(e.target.value);
+  renderAll();
+});
+document.getElementById('inflationSlider').addEventListener('input', e => {
+  state.inflation = Number(e.target.value);
+  renderAll();
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+  delete store.overrides[state.country];
+  saveStore();
+  renderAll();
+});
+
+// salaryManual needs custom wiring (not the generic bindManual) since the value it
+// shows/accepts depends on the monthly/annual mode, while state.salary stays annual.
+document.getElementById('salaryManual').addEventListener('input', () => {
+  const raw = document.getElementById('salaryManual').value;
+  if(raw === '' || raw === '-' || raw === '.') return;
+  const num = Number(raw);
+  if(isNaN(num)) return;
+  const slider = document.getElementById('salarySlider');
+  const min = Number(slider.min), max = Number(slider.max);
+  const clamped = Math.min(max, Math.max(min, num));
+  slider.value = clamped;
+  state.salary = state.salaryMode === 'monthly' ? num*12 : num;
+  renderAll();
+});
+bindManual('stateTaxManual', 'stateTaxSlider', v => { state.stateTaxRate = v; renderAll(); });
+bindManual('returnRateManual', 'returnRateSlider', v => { state.returnRate = v; renderAll(); });
+bindManual('yearsManual', 'yearsSlider', v => { state.years = Math.round(v); renderAll(); });
+bindManual('inflationManual', 'inflationSlider', v => { state.inflation = v; renderAll(); });
+
+// Delegated listener for custom-rate inputs. We capture the raw typed string + cursor
+// position before renderAll() destroys/recreates the input, and restore that exact string
+// afterward — not the derived number — so a trailing "." or "0" never gets silently stripped.
+document.body.addEventListener('input', e => {
+  if(!e.target.classList.contains('price-input')) return;
+  const cat = e.target.dataset.cat, key = e.target.dataset.key;
+  if(cat === '_') return; // non-editable display rows guard
+  const rawTyped = e.target.value;
+  const selStart = e.target.selectionStart, selEnd = e.target.selectionEnd;
+  const val = rawTyped === '' ? '' : Number(rawTyped)/100; // flatRate stored as decimal, typed as whole percent
+  setOverride(cat, key, val);
+  renderAll();
+  const again = document.querySelector(`.price-input[data-cat="${cat}"][data-key="${key}"]`);
+  if(again){
+    again.value = rawTyped;
+    again.focus();
+    try{ again.setSelectionRange(selStart, selEnd); }catch(_){}
+  }
+});
+
+/* ---------------- init ---------------- */
+/* ---------------- Professional PDF Export ---------------- */
+function generatePDF() {
+  const btn = document.getElementById('pdfBtn');
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    let y = 20;
+
+    function checkPage() {
+      if (y > pageHeight - 30) {
+        doc.addPage();
+        y = 20;
+      }
+    }
+
+    // ----- Currency Symbol Mapping -----
+    const symbolMap = {
+      'NG': { symbol: '₦', fallback: 'NGN' },
+      'US': { symbol: '$', fallback: 'USD' },
+      'GB': { symbol: '£', fallback: 'GBP' },
+      'IN': { symbol: '₹', fallback: 'INR' },
+      'KE': { symbol: 'KSh', fallback: 'KES' },
+      'ZA': { symbol: 'R', fallback: 'ZAR' },
+      'GH': { symbol: 'GH₵', fallback: 'GHS' },
+      'EG': { symbol: 'E£', fallback: 'EGP' },
+      'DE': { symbol: '€', fallback: 'EUR' },
+      'FR': { symbol: '€', fallback: 'EUR' },
+      'ES': { symbol: '€', fallback: 'EUR' },
+      'IT': { symbol: '€', fallback: 'EUR' },
+      'NL': { symbol: '€', fallback: 'EUR' },
+      'CN': { symbol: '¥', fallback: 'CNY' },
+      'JP': { symbol: '¥', fallback: 'JPY' },
+      'SG': { symbol: 'S$', fallback: 'SGD' },
+      'ID': { symbol: 'Rp', fallback: 'IDR' },
+      'AE': { symbol: 'AED', fallback: 'AED' },
+      'CA': { symbol: 'C$', fallback: 'CAD' },
+      'AU': { symbol: 'A$', fallback: 'AUD' },
+    };
+    
+    const countryCode = state.country || 'US';
+    const currencyInfo = symbolMap[countryCode] || { symbol: '$', fallback: 'USD' };
+
+    function fmtPDF(v) {
+      const clamped = Math.min(Math.max(v || 0, 0), 1000000000000);
+      if (countryCode === 'NG') {
+        return `NGN ${Math.round(clamped).toLocaleString()}`;
+      }
+      return currencyInfo.symbol + Math.round(clamped).toLocaleString();
+    }
+
+    function fmtPct(v) {
+      return (v * 100).toFixed(1) + '%';
+    }
+
+    const countryMap = {
+      'NG': 'Nigeria', 'US': 'United States', 'GB': 'United Kingdom',
+      'IN': 'India', 'KE': 'Kenya', 'ZA': 'South Africa',
+      'GH': 'Ghana', 'EG': 'Egypt', 'DE': 'Germany',
+      'FR': 'France', 'ES': 'Spain', 'IT': 'Italy',
+      'NL': 'Netherlands', 'CN': 'China', 'JP': 'Japan',
+      'SG': 'Singapore', 'ID': 'Indonesia', 'AE': 'UAE',
+      'CA': 'Canada', 'AU': 'Australia',
+    };
+    const countryName = countryMap[countryCode] || 'Unknown';
+
+    // ----- Recalculate everything from state -----
+    const c = countryData[countryCode];
+    const salary = state.salary;
+    const isUS = countryCode === 'US';
+    const isUK = countryCode === 'GB';
+
+    let totalTax = 0;
+    if (isUS) {
+      const US_FEDERAL_BRACKETS = [
+        { upTo: 11925, rate: 0.10 },
+        { upTo: 48475, rate: 0.12 },
+        { upTo: 103350, rate: 0.22 },
+        { upTo: 197300, rate: 0.24 },
+        { upTo: 250525, rate: 0.32 },
+        { upTo: 626350, rate: 0.35 },
+        { upTo: Infinity, rate: 0.37 },
+      ];
+      function marginalTax(income, brackets) {
+        let tax = 0, lower = 0;
+        for (const b of brackets) {
+          if (income <= lower) break;
+          const taxable = Math.min(income, b.upTo) - lower;
+          tax += taxable * b.rate;
+          lower = b.upTo;
+          if (income <= b.upTo) break;
+        }
+        return tax;
+      }
+      totalTax = marginalTax(salary, US_FEDERAL_BRACKETS);
+      const stateTax = salary * (state.stateTaxRate / 100);
+      totalTax += stateTax;
+    } else if (isUK) {
+      const UK_BANDS = [
+        { upTo: 12570, rate: 0.00 },
+        { upTo: 50270, rate: 0.20 },
+        { upTo: 125140, rate: 0.40 },
+        { upTo: Infinity, rate: 0.45 },
+      ];
+      function marginalTax(income, brackets) {
+        let tax = 0, lower = 0;
+        for (const b of brackets) {
+          if (income <= lower) break;
+          const taxable = Math.min(income, b.upTo) - lower;
+          tax += taxable * b.rate;
+          lower = b.upTo;
+          if (income <= b.upTo) break;
+        }
+        return tax;
+      }
+      totalTax = marginalTax(salary, UK_BANDS);
+    } else {
+      const baseRate = c.income.flatRate;
+      const ov = getOverride('income', 'flatRate');
+      const rate = ov !== undefined ? ov / 100 : baseRate;
+      totalTax = salary * rate;
+    }
+
+    const netAnnual = salary - totalTax;
+    const netMonthly = netAnnual / 12;
+
+    const needs = state.needs || 0;
+    const wants = state.wants || 0;
+    const savings = state.savings || 0;
+    const spentTotal = needs + wants + savings;
+    const base = Math.max(netMonthly, spentTotal, 1);
+    const needsPct = (needs / base) * 100;
+    const wantsPct = (wants / base) * 100;
+    const savingsPct = (savings / base) * 100;
+
+    const P = state.currentSavings || 0;
+    const r = state.returnRate / 100;
+    const n = state.years || 0;
+    const PMT = savings * 12;
+    const growthFactor = Math.pow(1 + r, n);
+    const FV = r > 0 ? P * growthFactor + PMT * ((growthFactor - 1) / r) : P + PMT * n;
+    const inflRate = state.inflation / 100;
+    const realValue = inflRate > 0 ? FV / Math.pow(1 + inflRate, n) : FV;
+    const annualExpenses = (needs + wants) * 12;
+    const fiNumber = annualExpenses * 25;
+
+    // ----- HEADER -----
+    doc.setFillColor(10, 22, 40);
+    doc.rect(0, 0, pageWidth, 45, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.setTextColor(245, 166, 35);
+    doc.text('BudgetPro', 14, 30);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(255, 255, 255);
+    doc.text('Income & Savings Estimate', 14, 40);
+
+    doc.setFontSize(9);
+    doc.setTextColor(140, 150, 180);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}  |  ${countryName} (${countryCode})`, 14, 52);
+    y = 66;
+    checkPage();
+
+    // ----- Section 1: Income Parameters -----
+    doc.setDrawColor(245, 166, 35);
+    doc.setLineWidth(0.5);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Income Parameters', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+
+    const salaryDisplay = state.salaryMode === 'monthly' ? Math.round(salary / 12) : salary;
+    const salaryPeriod = state.salaryMode === 'monthly' ? 'month' : 'year';
+    doc.text(`Gross Salary: ${fmtPDF(salaryDisplay)} / ${salaryPeriod}`, 14, y); y += 6;
+    doc.text(`Country: ${countryName}`, 14, y); y += 6;
+    doc.text(`State Tax Rate (flat): ${state.stateTaxRate || 0}%`, 14, y); y += 10;
+    checkPage();
+
+    // ----- Section 2: Tax & Net Income -----
+    doc.setDrawColor(245, 166, 35);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Tax & Net Income', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+
+    doc.text(`Gross Annual Salary: ${fmtPDF(salary)}`, 14, y); y += 6;
+    doc.text(`Total Tax: ${fmtPDF(totalTax)}`, 14, y); y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(245, 166, 35);
+    doc.text(`Net Annual Income: ${fmtPDF(netAnnual)}`, 14, y); y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+    doc.text(`Net Monthly Income: ${fmtPDF(netMonthly)}`, 14, y); y += 10;
+    checkPage();
+
+    // ----- Section 3: 50/30/20 Budget Rule -----
+    doc.setDrawColor(245, 166, 35);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text('50/30/20 Budget Rule', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+
+    doc.text(`Your Monthly Spend:`, 14, y); y += 6;
+    doc.text(`  • Needs: ${fmtPDF(needs)} (${needsPct.toFixed(1)}%)`, 20, y); y += 5;
+    doc.text(`  • Wants: ${fmtPDF(wants)} (${wantsPct.toFixed(1)}%)`, 20, y); y += 5;
+    doc.text(`  • Savings: ${fmtPDF(savings)} (${savingsPct.toFixed(1)}%)`, 20, y); y += 8;
+
+    const needsDiff = needsPct - 50;
+    const wantsDiff = wantsPct - 30;
+    const savingsDiff = savingsPct - 20;
+    const isOverspending = needsDiff > 5 || wantsDiff > 5 || savingsDiff < -5;
+    
+    if (isOverspending) {
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(239, 106, 95);
+      doc.text(`WARNING: Off Target — Adjust your budget`, 14, y); y += 6;
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60, 60, 60);
+      if (needsDiff > 5) doc.text(`  • Needs are ${needsDiff.toFixed(1)}% above target (50%)`, 20, y); y += 5;
+      if (wantsDiff > 5) doc.text(`  • Wants are ${wantsDiff.toFixed(1)}% above target (30%)`, 20, y); y += 5;
+      if (savingsDiff < -5) doc.text(`  • Savings are ${Math.abs(savingsDiff).toFixed(1)}% below target (20%)`, 20, y); y += 5;
+    } else {
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(61, 220, 151);
+      doc.text(`GOOD: On Track — Your budget aligns with the 50/30/20 rule`, 14, y); y += 6;
+    }
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(60, 60, 60);
+    y += 6;
+    checkPage();
+
+    // ----- Section 4: Savings & Future Value -----
+    doc.setDrawColor(245, 166, 35);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Savings & Future Value', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+
+    const savingsRate = netMonthly > 0 ? (savings / netMonthly) * 100 : 0;
+    doc.text(`Savings Rate: ${savingsRate.toFixed(1)}% of net income`, 14, y); y += 6;
+    doc.text(`Current Savings / Investments: ${fmtPDF(P)}`, 14, y); y += 6;
+    doc.text(`Expected Annual Return: ${state.returnRate || 0}%`, 14, y); y += 6;
+    doc.text(`Projection Years: ${state.years || 0}`, 14, y); y += 8;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(245, 166, 35);
+    doc.text(`Future Value (nominal): ${fmtPDF(FV)}`, 14, y); y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+    doc.text(`Inflation-Adjusted Value: ${fmtPDF(realValue)} (${state.inflation || 0}% inflation)`, 14, y); y += 10;
+    checkPage();
+
+    // ----- Section 5: Financial Independence -----
+    doc.setDrawColor(245, 166, 35);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Financial Independence (FI)', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+
+    doc.text(`Financial Needs (Annual): ${fmtPDF(annualExpenses)}`, 14, y); y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(245, 166, 35);
+    doc.text(`Financial Goals: ${fmtPDF(fiNumber)}`, 14, y); y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(80, 80, 80);
+    doc.text('(Based on the 4% withdrawal rule — you need 25× your annual expenses invested)', 14, y); y += 10;
+    checkPage();
+
+    // ----- Section 6: Inflation Warning -----
+    if (state.inflation > 0 && FV > 0) {
+      doc.setDrawColor(239, 106, 95);
+      doc.setLineWidth(0.5);
+      doc.line(14, y, pageWidth - 14, y);
+      y += 6;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(239, 106, 95);
+      doc.text('NOTE: Inflation Erosion Warning', 14, y);
+      y += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(80, 80, 80);
+      doc.text(`Your ${fmtPDF(FV)} in ${state.years || 0} years will have the purchasing`, 14, y); y += 5;
+      doc.text(`power of only ${fmtPDF(realValue)} in today's dollars`, 14, y); y += 5;
+      doc.text(`assuming ${state.inflation || 0}% annual inflation.`, 14, y); y += 10;
+      checkPage();
+    }
+
+    // ----- Section 7: Smart Recommendations -----
+    doc.setDrawColor(245, 166, 35);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Smart Recommendations', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 80);
+
+    const recItems = document.querySelectorAll('#recList li');
+    if (recItems && recItems.length > 0) {
+      recItems.forEach((li) => {
+        // Replace any emoji in the text with plain labels (just in case)
+        let text = li.textContent || 'Adjust the sliders to see personalized recommendations.';
+        text = text.replace(/[⚠️✅💰📉💡💼🤝🏆🏠💸📈🏡🛡️📋]/g, '').trim();
+        const lines = doc.splitTextToSize(text, pageWidth - 28);
+        doc.text(lines, 14, y);
+        y += lines.length * 5 + 3;
+        if (y > pageHeight - 40) {
+          doc.addPage();
+          y = 20;
+        }
+      });
+    } else {
+      doc.text('Adjust the sliders to see personalized recommendations.', 14, y);
+      y += 6;
+    }
+    checkPage();
+
+    // ----- FOOTER -----
+    doc.setFontSize(8);
+    doc.setTextColor(140, 140, 140);
+    doc.text('All figures are editable placeholders, not tax or financial advice.', 14, pageHeight - 10);
+
+    doc.save(`BudgetPro-Income-${countryCode}.pdf`);
+  } catch (err) {
+    console.error('PDF Error:', err);
+    alert('PDF generation failed: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📄 Download PDF Summary';
+  }
+}
+document.getElementById('pdfBtn').addEventListener('click', generatePDF);
+
+function init(){
+  populateCountries();
+  applySalaryModeBounds();
+  document.querySelectorAll('#salaryModeSeg button').forEach(b=>b.classList.toggle('active', b.dataset.mode===state.salaryMode));
+  document.getElementById('salarySlider').value = state.salaryMode === 'monthly' ? Math.round(state.salary/12) : state.salary;
+  document.getElementById('stateTaxSlider').value = state.stateTaxRate;
+  document.getElementById('needsInput').value = state.needs;
+  document.getElementById('wantsInput').value = state.wants;
+  document.getElementById('savingsInput').value = state.savings;
+  document.getElementById('currentSavingsInput').value = state.currentSavings;
+  document.getElementById('returnRateSlider').value = state.returnRate;
+  document.getElementById('yearsSlider').value = state.years;
+  document.getElementById('inflationSlider').value = state.inflation;
+  renderAll();
+}
+init();
+</script>
+</body>
+</html>
+

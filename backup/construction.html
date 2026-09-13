@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="google-adsense-account" content="ca-pub-2229008759020664">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BudgetPro — Construction Lifecycle Estimator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+  --navy-950: #0a1628;
+  --navy-900: #0e1d34;
+  --navy-850: #11223c;
+  --navy-800: #132846;
+  --navy-700: #1c3358;
+  --gold: #f5a623;
+  --gold-dim: #c8860f;
+  --gold-soft: rgba(245, 166, 35, 0.12);
+  --ink: #edf1f7;
+  --ink-muted: #8a96ac;
+  --ink-faint: #5c6883;
+  --line: rgba(245, 166, 35, 0.16);
+  --line-soft: rgba(255, 255, 255, 0.06);
+  --green: #3ddc97;
+  --red: #ef6a5f;
+  --display: "Space Grotesk", sans-serif;
+  --body: "Inter", sans-serif;
+  --mono: "IBM Plex Mono", monospace;
+}
+
+
+body.light-mode .global-nav {
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom-color: var(--line);
+}
+
+body.light-mode .sheet {
+  background: #ffffff;
+}
+
+body.light-mode .grand-card {
+  background: #ffffff;
+  border-color: var(--gold);
+}
+
+body.light-mode .manual-input,
+body.light-mode .num-field,
+body.light-mode .price-input {
+  background: #ffffff;
+  color: #1a1a2e;
+  border-color: var(--line);
+}
+
+body.light-mode .line-row:nth-child(even) {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+body.light-mode .subtotal-bar {
+  background: var(--navy-850);
+}
+
+body.light-mode .stat-card {
+  background: #ffffff;
+}
+
+body.light-mode .chart-card {
+  background: #ffffff;
+}
+
+body.light-mode .recommendations {
+  background: var(--gold-soft);
+}
+
+body.light-mode .topbar {
+  border-bottom-color: var(--line);
+}
+
+body.light-mode select#countrySelect {
+  background: #ffffff;
+  color: #1a1a2e;
+}
+
+body.light-mode .gn-link {
+  color: var(--ink-muted);
+}
+body.light-mode .gn-link:hover {
+  color: var(--ink);
+  background: var(--navy-850);
+}
+body.light-mode .gn-link.active {
+  color: var(--gold);
+  background: var(--gold-soft);
+}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--navy-950);
+    color:var(--ink);
+    font-family:var(--body);
+    min-height:100vh;
+    position:relative;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* blueprint grid backdrop */
+  body::before{
+    content:"";
+    position:fixed;inset:0;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(245,166,35,.045) 0 1px, transparent 1px 40px),
+      repeating-linear-gradient(90deg, rgba(245,166,35,.045) 0 1px, transparent 1px 40px),
+      repeating-linear-gradient(0deg, rgba(245,166,35,.06) 0 1px, transparent 1px 200px),
+      repeating-linear-gradient(90deg, rgba(245,166,35,.06) 0 1px, transparent 1px 200px);
+    pointer-events:none;
+    z-index:0;
+  }
+  a{color:var(--gold);}
+  .wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 20px 80px;}
+
+  /* ---------- topbar ---------- */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:20px;
+    padding:22px 20px;border-bottom:1px solid var(--line);
+    max-width:1180px;margin:0 auto;position:relative;z-index:1;flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand .mark{
+    font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:.5px;color:var(--ink);
+  }
+  .brand .mark span{color:var(--gold);}
+  .brand .tagline{font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:.08em;text-transform:uppercase;}
+  .country-picker{display:flex;align-items:center;gap:10px;}
+  .country-picker label{font-family:var(--mono);font-size:11px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.06em;}
+  select#countrySelect{
+    background:var(--navy-850);color:var(--ink);border:1px solid var(--line);
+    border-radius:8px;padding:9px 14px;font-family:var(--body);font-size:14px;font-weight:600;
+    min-width:220px;cursor:pointer;
+  }
+  select#countrySelect:focus{outline:2px solid var(--gold);outline-offset:1px;}
+
+  /* ---------- section shell ---------- */
+  .sheet{
+    margin-top:34px;background:var(--navy-900);border:1px solid var(--line-soft);
+    border-radius:14px;padding:26px 26px 22px;position:relative;overflow:hidden;
+  }
+  .sheet::before{
+    content:"";position:absolute;top:0;left:0;width:100%;height:3px;
+    background:linear-gradient(90deg,var(--gold),transparent 70%);
+  }
+  .sheet-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:20px;flex-wrap:wrap;}
+  .sheet-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--gold);text-transform:uppercase;}
+  .sheet-title{font-family:var(--display);font-size:20px;font-weight:600;margin:4px 0 0;color:var(--ink);}
+  .sheet-sub{font-family:var(--body);font-size:13px;color:var(--ink-muted);margin-top:6px;max-width:520px;}
+  .sheet-num{font-family:var(--mono);font-size:11px;color:var(--ink-faint);border:1px solid var(--line);border-radius:20px;padding:5px 12px;white-space:nowrap;}
+
+  /* ---------- inputs panel ---------- */
+  .inputs-grid{display:grid;grid-template-columns:1.3fr 1fr 1.2fr 1fr;gap:24px;}
+  .field{display:flex;flex-direction:column;gap:10px;}
+  .field label{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-muted);display:flex;justify-content:space-between;}
+  .field label .val{color:var(--gold);font-weight:600;}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;
+    background:var(--navy-700);outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;
+    background:var(--gold);border:3px solid var(--navy-950);cursor:pointer;box-shadow:0 0 0 1px var(--gold);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:18px;height:18px;border-radius:50%;background:var(--gold);border:3px solid var(--navy-950);cursor:pointer;
+  }
+  .segmented{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  .segmented button{
+    flex:1 1 auto;min-width:64px;background:transparent;border:none;color:var(--ink-muted);font-family:var(--body);
+    font-size:13px;font-weight:600;padding:10px 6px;cursor:pointer;border-right:1px solid var(--line);border-bottom:1px solid var(--line);transition:.15s;white-space:nowrap;
+  }
+  .segmented button:last-child{border-right:none;}
+  .segmented button.active{background:var(--gold);color:var(--navy-950);}
+  .segmented button:hover:not(.active){background:var(--navy-800);color:var(--ink);}
+  .toggle-row{display:flex;align-items:center;gap:12px;height:38px;}
+  .switch{position:relative;width:46px;height:26px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider-pill{position:absolute;inset:0;background:var(--navy-700);border-radius:14px;cursor:pointer;transition:.2s;border:1px solid var(--line);}
+  .slider-pill::before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:var(--ink-muted);border-radius:50%;transition:.2s;}
+  .switch input:checked + .slider-pill{background:var(--gold-soft);border-color:var(--gold);}
+  .switch input:checked + .slider-pill::before{transform:translateX(20px);background:var(--gold);}
+  .toggle-label{font-family:var(--body);font-size:13px;font-weight:600;color:var(--ink);}
+
+  /* ---------- tables ---------- */
+  .table-scroll{overflow-x:auto;border:1px solid var(--line-soft);border-radius:10px;}
+  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px;min-width:680px;}
+  thead th{
+    text-align:left;background:var(--navy-850);color:var(--ink-faint);font-size:10.5px;
+    text-transform:uppercase;letter-spacing:.07em;padding:11px 14px;border-bottom:1px solid var(--line);font-weight:600;
+    position:sticky;top:0;
+  }
+  tbody td{padding:10px 14px;border-bottom:1px solid var(--line-soft);color:var(--ink);vertical-align:middle;}
+  tbody tr:hover{background:rgba(245,166,35,.035);}
+  tbody tr:last-child td{border-bottom:none;}
+  td.mat-name{font-family:var(--body);font-weight:600;color:var(--ink);}
+  td.mat-name .unit-tag{display:block;font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);font-weight:400;margin-top:2px;}
+  .num{text-align:right;font-variant-numeric:tabular-nums;}
+  .price-input{
+    width:110px;background:var(--navy-800);border:1px solid var(--line);border-radius:6px;
+    color:var(--gold);font-family:var(--mono);font-size:12.5px;padding:7px 9px;text-align:right;
+  }
+  .price-input::placeholder{color:var(--ink-faint);}
+  .price-input:focus{outline:1px solid var(--gold);}
+  .price-input.overridden{border-color:var(--gold);background:rgba(245,166,35,.08);}
+  tfoot td{padding:14px;font-family:var(--display);font-weight:600;font-size:15px;border-top:1px solid var(--line);}
+
+  /* ---------- phase2 / phase3 line rows ---------- */
+  .line-list{display:flex;flex-direction:column;gap:0;border:1px solid var(--line-soft);border-radius:10px;overflow:hidden;}
+  .line-row{
+    display:grid;grid-template-columns:1.6fr .9fr .9fr .9fr;gap:14px;align-items:center;
+    padding:13px 16px;border-bottom:1px solid var(--line-soft);
+  }
+  .line-row:last-child{border-bottom:none;}
+  .line-row:nth-child(even){background:rgba(255,255,255,.015);}
+  .line-name{font-family:var(--body);font-weight:600;font-size:13.5px;}
+  .line-note{display:block;font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);font-weight:400;margin-top:3px;}
+  .line-meta{font-family:var(--mono);font-size:12px;color:var(--ink-muted);text-align:right;}
+  .line-total{font-family:var(--mono);font-size:13.5px;color:var(--gold);text-align:right;font-weight:600;}
+
+  .subtotal-bar{
+    display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding:14px 18px;
+    background:var(--navy-850);border:1px solid var(--line);border-radius:10px;
+  }
+  .subtotal-bar .label{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-muted);}
+  .subtotal-bar .amount{font-family:var(--display);font-size:19px;font-weight:700;color:var(--gold);}
+
+  /* ---------- summary ---------- */
+  .summary-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:start;}
+  .grand-card{
+    background:linear-gradient(160deg,var(--navy-850),var(--navy-900));border:1px solid var(--gold);
+    border-radius:14px;padding:30px;text-align:center;
+  }
+  .grand-card .g-label{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);}
+  .grand-card .g-amount{font-family:var(--display);font-size:44px;font-weight:700;color:var(--ink);margin:10px 0 6px;word-break:break-word;}
+  .grand-card .g-sub{font-family:var(--mono);font-size:12px;color:var(--ink-muted);}
+  .breakdown-legend{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px;text-align:left;}
+  .legend-item{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;color:var(--ink-muted);}
+  .legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+  .legend-item b{color:var(--ink);font-weight:600;margin-left:auto;}
+  .chart-card{background:var(--navy-850);border:1px solid var(--line-soft);border-radius:14px;padding:20px;}
+  .reset-btn{
+    margin-top:18px;width:100%;background:transparent;border:1px solid var(--line);color:var(--ink-muted);
+    font-family:var(--mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;padding:11px;border-radius:8px;cursor:pointer;
+  }
+  .reset-btn:hover{border-color:var(--red);color:var(--red);}
+  .pdf-btn{
+    margin-top:10px;width:100%;background:var(--gold-soft);border:1px solid var(--gold);color:var(--gold);
+    font-family:var(--mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;padding:11px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s;
+  }
+  .pdf-btn:hover{background:var(--gold);color:var(--navy-950);}
+  .pdf-btn:disabled{opacity:.5;cursor:wait;}
+
+  .foot-note{margin-top:40px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--ink-faint);line-height:1.7;}
+
+  @media(max-width:900px){
+    .inputs-grid{grid-template-columns:1fr 1fr;}
+    .summary-grid{grid-template-columns:1fr;}
+    .line-row{grid-template-columns:1.3fr 1fr 1fr;}
+    .line-row .col-price{display:none;}
+  }
+  @media(max-width:560px){
+    .inputs-grid{grid-template-columns:1fr;}
+    .sheet{padding:20px 16px;}
+    .grand-card .g-amount{font-size:32px;}
+  }
+
+  /* ===================== GLOBAL STICKY NAV (identical on every page) ===================== */
+  .global-nav{position:sticky;top:0;z-index:100;background:rgba(10,22,40,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+  .gn-inner{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:18px;padding:12px 20px;}
+  .gn-logo{font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:.4px;color:var(--ink);text-decoration:none;flex-shrink:0;white-space:nowrap;}
+  .gn-logo span{color:var(--gold);}
+  .gn-links{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;}
+  .gn-links::-webkit-scrollbar{display:none;}
+  .gn-link{
+    display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;
+    font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink-muted);
+    text-decoration:none;padding:8px 12px;border-radius:8px;transition:.15s;border:1px solid transparent;
+  }
+  .gn-link:hover{color:var(--ink);background:var(--navy-850);}
+  .gn-link.active{color:var(--gold);background:var(--gold-soft);border-color:var(--line);}
+  .gn-emoji{font-size:14px;}
+  @media(max-width:720px){
+    .gn-link .gn-text{display:none;}
+    .gn-link{padding:8px 10px;}
+    .gn-logo{font-size:14px;}
+  }
+
+  .manual-input{
+    margin-top:8px;width:100%;background:var(--navy-800);border:1px solid var(--line);
+    border-radius:6px;color:var(--gold);font-family:var(--mono);font-size:12.5px;
+    padding:7px 9px;text-align:center;
+  }
+  .manual-input:focus{outline:1px solid var(--gold);}
+</style>
+</head>
+<body>
+
+<header class="global-nav">
+  <div class="gn-inner">
+    <a href="index.html" class="gn-logo">BUDGET<span>PRO</span></a>
+    <nav class="gn-links">
+      <a href="mortgage.html" class="gn-link"><span class="gn-emoji">🏠</span><span class="gn-text">Mortgage</span></a>
+      <a href="auto.html" class="gn-link"><span class="gn-emoji">🚗</span><span class="gn-text">Auto</span></a>
+      <a href="construction.html" class="gn-link active"><span class="gn-emoji">🏗️</span><span class="gn-text">Construction</span></a>
+      <a href="solar.html" class="gn-link"><span class="gn-emoji">☀️</span><span class="gn-text">Solar</span></a>
+      <a href="business.html" class="gn-link"><span class="gn-emoji">🏢</span><span class="gn-text">Business</span></a>
+      <a href="income.html" class="gn-link"><span class="gn-emoji">💰</span><span class="gn-text">Savings</span></a>
+    </nav>
+  </div>
+</header>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="mark">BUDGET<span>PRO</span></span>
+    <span class="tagline">Construction Lifecycle Estimator</span>
+  </div>
+  <div class="country-picker">
+    <label for="countrySelect">Country</label>
+    <select id="countrySelect"></select>
+    
+  </div>
+</header>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- PROJECT PARAMETERS -->
+  <section class="sheet" id="paramsSheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Project Parameters</div>
+        <div class="sheet-title">Define the build</div>
+      </div>
+      <div class="sheet-num">SHEET 00 / 03</div>
+    </div>
+    <div class="inputs-grid">
+      <div class="field">
+        <label>Floor Area <span class="val" id="sqmVal">120 m²</span></label>
+        <input type="range" id="sqmSlider" min="50" max="5000" step="10" value="120">
+        <input type="number" class="manual-input" id="sqmManual" min="50" max="5000" step="10" value="120" aria-label="sqm manual entry">
+      </div>
+      <div class="field">
+        <label>Floors <span class="val" id="floorsVal">1</span></label>
+        <input type="range" id="floorsSlider" min="1" max="5" step="1" value="1">
+        <input type="number" class="manual-input" id="floorsManual" min="1" max="5" step="1" value="1" aria-label="floors manual entry">
+      </div>
+      <div class="field">
+        <label>Build Quality</label>
+        <div class="segmented" id="qualitySeg">
+          <button data-q="basic">Basic</button>
+          <button data-q="mid" class="active">Mid</button>
+          <button data-q="luxury">Luxury</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Furnishing</label>
+        <div class="toggle-row">
+          <label class="switch">
+            <input type="checkbox" id="furnishToggle">
+            <span class="slider-pill"></span>
+          </label>
+          <span class="toggle-label" id="furnishLabel">Included</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PHASE 1 -->
+  <section class="sheet" id="phase1Sheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Phase 01 — Setup</div>
+        <div class="sheet-title">Bill of Quantities</div>
+        <div class="sheet-sub">Suggested unit prices pull from local market data. Override any price to fit your actual quotes — overrides persist automatically.</div>
+      </div>
+      <div class="sheet-num">SHEET 01 / 03</div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Material</th>
+            <th class="num">Quantity</th>
+            <th class="num">Suggested</th>
+            <th class="num">Custom Price</th>
+            <th class="num">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody id="boqBody"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4">Materials Subtotal</td>
+            <td class="num" id="materialsSubtotal">—</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </section>
+
+  <!-- PHASE 2 -->
+  <section class="sheet" id="phase2Sheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Phase 02 — Handover</div>
+        <div class="sheet-title">Finishing &amp; Furnishing</div>
+        <div class="sheet-sub">Cleaning, furniture, labor and professional fees applied on top of the materials subtotal.</div>
+      </div>
+      <div class="sheet-num">SHEET 02 / 03</div>
+    </div>
+    <div class="line-list" id="phase2List"></div>
+    <div class="subtotal-bar">
+      <span class="label">Phase 02 Subtotal</span>
+      <span class="amount" id="phase2Subtotal">—</span>
+    </div>
+  </section>
+
+  <!-- PHASE 3 -->
+  <section class="sheet" id="phase3Sheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Phase 03 — Recurring</div>
+        <div class="sheet-title">Monthly Utility Burn</div>
+        <div class="sheet-sub">Ongoing running costs once the building is occupied — not included in the one-time construction total.</div>
+      </div>
+      <div class="sheet-num">SHEET 03 / 03</div>
+    </div>
+    <div class="line-list" id="phase3List"></div>
+    <div class="subtotal-bar">
+      <span class="label">Total Monthly Running Cost</span>
+      <span class="amount" id="monthlyTotal">—</span>
+    </div>
+  </section>
+
+  <!-- SUMMARY -->
+  <section class="sheet" id="summarySheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Grand Summary</div>
+        <div class="sheet-title">Total project cost</div>
+      </div>
+    </div>
+    <div class="summary-grid">
+      <div class="grand-card">
+        <div class="g-label">Total Construction + Furnishing Cost</div>
+        <div class="g-amount" id="grandTotal">—</div>
+        <div class="g-sub" id="grandSub">Materials + Labor + Professional Fees + Finishing</div>
+        <div class="breakdown-legend" id="legend"></div>
+      </div>
+      <div class="chart-card">
+        <canvas id="breakdownChart" height="260"></canvas>
+        <button class="reset-btn" id="resetBtn">Reset all overrides for this country</button>
+        <button class="pdf-btn" id="pdfBtn">📄 Download PDF Summary</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot-note">
+    All prices are editable local-market placeholders, not live quotes — verify with local suppliers before budgeting.<br>
+    Your custom prices are saved to this browser automatically and reload with the page.
+  <br><br>A product of AI Brains Ventures — <a href="http://www.aibrainsventures.is-great.net/" target="_blank" rel="noopener">www.aibrainsventures.is-great.net</a></div>
+
+</div>
+
+<script src="countryData.js"></script>
+<script>
+
+/* ---------------- constants: quantity model (country-independent) ---------------- */
+const MATERIALS = [
+  { key:'cementPerBag',           label:'Cement',            unit:'bags',   qtyPerSqm:0.45, round:'up'   },
+  { key:'rebarPerTon',            label:'Rebar',              unit:'tons',   qtyPerSqm:0.018,round:'dec'  },
+  { key:'sandPerTon',             label:'Sand',                unit:'tons',   qtyPerSqm:0.040,round:'dec'  },
+  { key:'gravelPerTon',           label:'Gravel',              unit:'tons',   qtyPerSqm:0.035,round:'dec'  },
+  { key:'blocksPerPiece',         label:'Blocks',              unit:'pcs',    qtyPerSqm:9.5,  round:'up'   },
+  { key:'roofingSheet',           label:'Roofing Sheets',      unit:'sheets', qtyPerSqm:0.18, round:'up'   },
+  { key:'timberPerPlank',         label:'Timber',              unit:'planks', qtyPerSqm:0.25, round:'up'   },
+  { key:'tilesPerSqm',            label:'Tiles',                unit:'sqm',    qtyPerSqm:1.08, round:'dec'  },
+  { key:'paintPerBucket',         label:'Paint',                unit:'buckets',qtyPerSqm:0.045,round:'up'   },
+  { key:'doorUnit',               label:'Doors',                unit:'units',  qtyPerSqm:0.018,round:'up'   },
+  { key:'windowUnit',             label:'Windows',              unit:'units',  qtyPerSqm:0.035,round:'up'   },
+  { key:'electricalWirePerMeter', label:'Electrical Wiring',    unit:'m',      qtyPerSqm:2.8,  round:'dec'  },
+  { key:'plumbingLumpPerSqm',     label:'Plumbing',             unit:'sqm',    qtyPerSqm:1,    round:'dec'  },
+];
+
+const QUALITY_QTY_MULT  = { basic:0.85, mid:1.0, luxury:1.15 };
+const QUALITY_PRICE_MULT= { basic:1.0,  mid:1.0, luxury:1.30 };
+const QUALITY_WATTS_SQM = { basic:35,   mid:50,  luxury:70   };
+
+/* ---------------- state ---------------- */
+const STORE_KEY = 'budgetpro_construction_v1';
+let store = loadStore();
+let lastSummary = {};
+
+let state = {
+  country: store.settings.country || 'NG',
+  sqm: store.settings.sqm ?? 120,
+  floors: store.settings.floors ?? 1,
+  quality: store.settings.quality || 'mid',
+  furnish: store.settings.furnish ?? true,
+};
+
+function loadStore(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){ /* ignore corrupt storage */ }
+  return { settings:{}, overrides:{} };
+}
+function saveStore(){
+  localStorage.setItem(STORE_KEY, JSON.stringify(store));
+}
+function getOverride(category, key){
+  const c = store.overrides[state.country];
+  if(!c) return undefined;
+  const v = c[category + '.' + key];
+  return (v === undefined || v === null || v === '') ? undefined : v;
+}
+function setOverride(category, key, value){
+  if(!store.overrides[state.country]) store.overrides[state.country] = {};
+  const k = category + '.' + key;
+  if(value === '' || value === null || value === undefined || isNaN(value)){
+    delete store.overrides[state.country][k];
+  }else{
+    store.overrides[state.country][k] = Number(value);
+  }
+  saveStore();
+}
+
+/* ---------------- helpers ---------------- */
+function cd(){ return countryData[state.country]; }
+function sym(){ return cd().currencySymbol; }
+function fmtMoney(v){
+  return sym() + Math.round(v).toLocaleString(undefined,{maximumFractionDigits:0});
+}
+function fmtQty(v, round){
+  if(round === 'up') return Math.max(1, Math.ceil(v)).toLocaleString();
+  return v.toFixed(2);
+}
+function floorMultiplier(){ return 1 + (state.floors - 1) * 0.07; }
+function totalSqm(){ return state.sqm; }
+
+/* Keep a manual-entry number input in sync with its slider/state, unless the
+   user currently has that field focused (so we never fight their typing). */
+function syncManual(id, value){
+  const el = document.getElementById(id);
+  if(el && document.activeElement !== el) el.value = value;
+}
+/* Wire a manual number input to drive the same state as its paired slider. */
+function bindManual(manualId, sliderId, setter){
+  const manual = document.getElementById(manualId);
+  const slider = document.getElementById(sliderId);
+  if(!manual || !slider) return;
+  manual.addEventListener('input', () => {
+    const raw = manual.value;
+    if(raw === '' || raw === '-' || raw === '.') return;
+    const num = Number(raw);
+    if(isNaN(num)) return;
+    const min = Number(slider.min), max = Number(slider.max);
+    const clamped = Math.min(max, Math.max(min, num));
+    slider.value = clamped;
+    setter(num);
+  });
+  manual.addEventListener('change', () => {
+    const min = Number(slider.min), max = Number(slider.max);
+    let num = Number(manual.value);
+    if(isNaN(num)) num = Number(slider.value);
+    num = Math.min(max, Math.max(min, num));
+    setter(num);
+  });
+}
+
+/* ---------------- populate country dropdown ---------------- */
+function populateCountries(){
+  const sel = document.getElementById('countrySelect');
+  const regions = {};
+  countryList.forEach(c => { (regions[c.region] ||= []).push(c); });
+  sel.innerHTML = '';
+  Object.keys(regions).sort().forEach(region => {
+    const og = document.createElement('optgroup');
+    og.label = region;
+    regions[region].forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.code;
+      opt.textContent = `${c.name} (${c.currencySymbol})`;
+      og.appendChild(opt);
+    });
+    sel.appendChild(og);
+  });
+  sel.value = state.country;
+}
+
+/* ---------------- Phase 1: BOQ ---------------- */
+let materialSubtotals = {};
+
+function renderBOQ(){
+  const tbody = document.getElementById('boqBody');
+  tbody.innerHTML = '';
+  const c = cd().construction;
+  const fMult = floorMultiplier();
+  const qQty = QUALITY_QTY_MULT[state.quality];
+  const qPrice = QUALITY_PRICE_MULT[state.quality];
+  let subtotal = 0;
+  materialSubtotals = {};
+
+  MATERIALS.forEach(m => {
+    const qty = m.qtyPerSqm * totalSqm() * fMult * qQty;
+    const displayQty = m.round === 'up' ? Math.max(1, Math.ceil(qty)) : qty;
+    const basePrice = c[m.key] * qPrice;
+    const override = getOverride('construction', m.key);
+    const price = override !== undefined ? override : basePrice;
+    const rowSubtotal = displayQty * price;
+    subtotal += rowSubtotal;
+    materialSubtotals[m.key] = rowSubtotal;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="mat-name">${m.label}<span class="unit-tag">${m.unit}</span></td>
+      <td class="num">${fmtQty(qty, m.round)}</td>
+      <td class="num">${fmtMoney(basePrice)}</td>
+      <td class="num">
+        <input type="number" class="price-input ${override!==undefined?'overridden':''}"
+               data-cat="construction" data-key="${m.key}"
+               placeholder="${basePrice.toFixed(2)}"
+               value="${override!==undefined?override:''}">
+      </td>
+      <td class="num">${fmtMoney(rowSubtotal)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('materialsSubtotal').textContent = fmtMoney(subtotal);
+  return subtotal;
+}
+
+/* ---------------- Phase 2: Finishing & Furnishing ---------------- */
+function renderPhase2(materialsSubtotal){
+  const list = document.getElementById('phase2List');
+  list.innerHTML = '';
+  const c = cd();
+  let subtotal = 0;
+
+  function addRow(name, note, qtyLabel, unitPrice, cat, key, lineTotal){
+    subtotal += lineTotal;
+    const row = document.createElement('div');
+    row.className = 'line-row';
+    row.innerHTML = `
+      <div><div class="line-name">${name}</div><span class="line-note">${note}</span></div>
+      <div class="line-meta">${qtyLabel}</div>
+      <div class="line-meta col-price">
+        <input type="number" class="price-input" data-cat="${cat}" data-key="${key}"
+               placeholder="${unitPrice.toFixed(2)}"
+               value="${getOverride(cat,key)!==undefined?getOverride(cat,key):''}">
+      </div>
+      <div class="line-total">${fmtMoney(lineTotal)}</div>
+    `;
+    list.appendChild(row);
+  }
+
+  // Cleaning
+  const cleanBase = c.construction.cleaningPerSqm;
+  const cleanOv = getOverride('construction','cleaningPerSqm');
+  const cleanPrice = cleanOv !== undefined ? cleanOv : cleanBase;
+  addRow('Post-Construction Cleaning', `${totalSqm()} m² × unit rate`, `${totalSqm()} m²`, cleanBase, 'construction', 'cleaningPerSqm', cleanPrice*totalSqm());
+
+  let furnishTotal = 0;
+  if(state.furnish){
+    const f = c.furnishing;
+    const bedrooms = Math.max(1, Math.round(totalSqm()/70));
+
+    const lrBase = f.livingRoomSet, lrOv = getOverride('furnishing','livingRoomSet');
+    const lrPrice = lrOv!==undefined?lrOv:lrBase;
+    addRow('Living Room Set', '1 set', '1 ×', lrBase, 'furnishing','livingRoomSet', lrPrice);
+    furnishTotal += lrPrice;
+
+    const brBase = f.bedroomSet, brOv = getOverride('furnishing','bedroomSet');
+    const brPrice = brOv!==undefined?brOv:brBase;
+    addRow('Bedroom Sets', `${bedrooms} bedroom(s), ⌈${totalSqm()}/70⌉`, `${bedrooms} ×`, brBase, 'furnishing','bedroomSet', brPrice*bedrooms);
+    furnishTotal += brPrice*bedrooms;
+
+    const kBase = f.kitchenAppliances, kOv = getOverride('furnishing','kitchenAppliances');
+    const kPrice = kOv!==undefined?kOv:kBase;
+    addRow('Kitchen Appliances', '1 set', '1 ×', kBase, 'furnishing','kitchenAppliances', kPrice);
+    furnishTotal += kPrice;
+
+    const curBase = f.curtainsPerSqm, curOv = getOverride('furnishing','curtainsPerSqm');
+    const curPrice = curOv!==undefined?curOv:curBase;
+    addRow('Curtains', `${totalSqm()} m² × unit rate`, `${totalSqm()} m²`, curBase, 'furnishing','curtainsPerSqm', curPrice*totalSqm());
+    furnishTotal += curPrice*totalSqm();
+  }
+
+  // Labor (fixed % of materials, defined by country data, overridable as a rate)
+  const laborRateBase = c.construction.laborMultiplier;
+  const laborOv = getOverride('construction','laborMultiplier');
+  const laborRate = laborOv !== undefined ? laborOv : laborRateBase;
+  const laborCost = materialsSubtotal * laborRate;
+  addRow('Labor', `${Math.round(laborRate*100)}% of materials`, `${(laborRate*100).toFixed(0)}%`, laborRateBase, 'construction','laborMultiplier', laborCost);
+
+  // Architect / Engineer fee
+  const archRateBase = c.construction.archFeeMultiplier;
+  const archOv = getOverride('construction','archFeeMultiplier');
+  const archRate = archOv !== undefined ? archOv : archRateBase;
+  const archCost = materialsSubtotal * archRate;
+  addRow('Architect / Engineer Fee', `${Math.round(archRate*100)}% of materials`, `${(archRate*100).toFixed(0)}%`, archRateBase, 'construction','archFeeMultiplier', archCost);
+
+  document.getElementById('phase2Subtotal').textContent = fmtMoney(subtotal);
+
+  return { phase2Subtotal: subtotal, laborCost, archCost, furnishTotal, cleaningCost: cleanPrice*totalSqm() };
+}
+
+/* ---------------- Phase 3: Utilities ---------------- */
+function renderPhase3(){
+  const list = document.getElementById('phase3List');
+  list.innerHTML = '';
+  const u = cd().utilities;
+  let total = 0;
+
+  function addRow(name, note, qtyLabel, unitPrice, cat, key, lineTotal){
+    total += lineTotal;
+    const row = document.createElement('div');
+    row.className = 'line-row';
+    row.innerHTML = `
+      <div><div class="line-name">${name}</div><span class="line-note">${note}</span></div>
+      <div class="line-meta">${qtyLabel}</div>
+      <div class="line-meta col-price">
+        <input type="number" class="price-input" data-cat="${cat}" data-key="${key}"
+               placeholder="${unitPrice.toFixed(2)}"
+               value="${getOverride(cat,key)!==undefined?getOverride(cat,key):''}">
+      </div>
+      <div class="line-total">${fmtMoney(lineTotal)}</div>
+    `;
+    list.appendChild(row);
+  }
+
+  // Electricity
+  const watts = QUALITY_WATTS_SQM[state.quality];
+  const monthlyKwh = (totalSqm() * watts * 6 * 30) / 1000; // 6 avg daily-use hours
+  const elBase = u.electricityPerKwh, elOv = getOverride('utilities','electricityPerKwh');
+  const elPrice = elOv!==undefined?elOv:elBase;
+  addRow('Electricity', `${watts}W/m² load × 6h/day → ${monthlyKwh.toFixed(0)} kWh/mo`, `${monthlyKwh.toFixed(0)} kWh`, elBase, 'utilities','electricityPerKwh', monthlyKwh*elPrice);
+
+  // Water
+  const people = Math.max(1, Math.ceil(totalSqm()/30));
+  const m3 = people * 4;
+  const waBase = u.waterTariffPerM3, waOv = getOverride('utilities','waterTariffPerM3');
+  const waPrice = waOv!==undefined?waOv:waBase;
+  addRow('Water', `${people} occupant(s) × 4 m³/mo`, `${m3} m³`, waBase, 'utilities','waterTariffPerM3', m3*waPrice);
+
+  // Gas
+  const gasBase = u.gasCylinder, gasOv = getOverride('utilities','gasCylinder');
+  const gasPrice = gasOv!==undefined?gasOv:gasBase;
+  addRow('Gas', '2 cylinders/mo', '2 ×', gasBase, 'utilities','gasCylinder', 2*gasPrice);
+
+  // Waste
+  const wBase = u.wasteDisposal, wOv = getOverride('utilities','wasteDisposal');
+  const wPrice = wOv!==undefined?wOv:wBase;
+  addRow('Waste Disposal', 'flat monthly fee', '1 ×', wBase, 'utilities','wasteDisposal', wPrice);
+
+  document.getElementById('monthlyTotal').textContent = fmtMoney(total);
+  return total;
+}
+
+/* ---------------- Summary + Chart ---------------- */
+let chart;
+function renderSummary(materialsSubtotal, p2){
+  const grand = materialsSubtotal + p2.phase2Subtotal;
+  document.getElementById('grandTotal').textContent = fmtMoney(grand);
+
+  const slices = [
+    { label:'Materials',  value: materialsSubtotal, color:'#f5a623' },
+    { label:'Labor',       value: p2.laborCost,       color:'#3ddc97' },
+    { label:'Prof. Fees',  value: p2.archCost,        color:'#5b8def' },
+    { label:'Finishing',   value: p2.cleaningCost + p2.furnishTotal, color:'#ef6a5f' },
+  ];
+
+  const legend = document.getElementById('legend');
+  legend.innerHTML = slices.map(s => `
+    <div class="legend-item">
+      <span class="legend-dot" style="background:${s.color}"></span>
+      ${s.label} <b>${fmtMoney(s.value)}</b>
+    </div>
+  `).join('');
+
+  const ctx = document.getElementById('breakdownChart');
+  const data = {
+    labels: slices.map(s=>s.label),
+    datasets: [{ data: slices.map(s=>s.value), backgroundColor: slices.map(s=>s.color), borderColor:'#0e1d34', borderWidth:2 }]
+  };
+  if(chart){ chart.data = data; chart.update(); }
+  else{
+    chart = new Chart(ctx, {
+      type:'doughnut',
+      data,
+      options:{
+        plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:(c)=> `${c.label}: ${fmtMoney(c.raw)}` } } },
+        cutout:'62%'
+      }
+    });
+  }
+}
+
+/* ---------------- master render ---------------- */
+function renderAll(){
+  document.getElementById('sqmVal').textContent = `${state.sqm} m²`;
+  document.getElementById('floorsVal').textContent = state.floors;
+  syncManual('sqmManual', state.sqm);
+  syncManual('floorsManual', state.floors);
+  document.getElementById('furnishLabel').textContent = state.furnish ? 'Included' : 'Excluded';
+
+  const materialsSubtotal = renderBOQ();
+  const p2 = renderPhase2(materialsSubtotal);
+  const monthlyTotal = renderPhase3();
+  renderSummary(materialsSubtotal, p2);
+
+  lastSummary = {
+    materialsSubtotal, phase2Subtotal: p2.phase2Subtotal, grandTotal: materialsSubtotal + p2.phase2Subtotal,
+    monthlyTotal
+  };
+
+  store.settings = { country: state.country, sqm: state.sqm, floors: state.floors, quality: state.quality, furnish: state.furnish };
+  saveStore();
+}
+
+/* ---------------- events ---------------- */
+document.getElementById('countrySelect').addEventListener('change', e => {
+  state.country = e.target.value;
+  renderAll();
+});
+document.getElementById('sqmSlider').addEventListener('input', e => {
+  state.sqm = Number(e.target.value);
+  renderAll();
+});
+document.getElementById('floorsSlider').addEventListener('input', e => {
+  state.floors = Number(e.target.value);
+  renderAll();
+});
+document.getElementById('qualitySeg').addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  state.quality = btn.dataset.q;
+  document.querySelectorAll('#qualitySeg button').forEach(b=>b.classList.toggle('active', b===btn));
+  renderAll();
+});
+document.getElementById('furnishToggle').addEventListener('change', e => {
+  state.furnish = e.target.checked;
+  renderAll();
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+  delete store.overrides[state.country];
+  saveStore();
+  renderAll();
+});
+
+bindManual('sqmManual', 'sqmSlider', v => { state.sqm = v; renderAll(); });
+bindManual('floorsManual', 'floorsSlider', v => { state.floors = Math.round(v); renderAll(); });
+
+// Delegated listener for all custom-price inputs (tables + line rows are re-rendered often).
+// IMPORTANT: renderAll() destroys and recreates every input in these tables, so we capture
+// the user's exact typed string + cursor position BEFORE re-rendering and restore that raw
+// string afterward — restoring the *derived number* instead (e.g. "7" instead of "7.") would
+// silently eat trailing decimal points/zeros while the user is still mid-keystroke.
+document.body.addEventListener('input', e => {
+  if(!e.target.classList.contains('price-input')) return;
+  const cat = e.target.dataset.cat, key = e.target.dataset.key;
+  const rawTyped = e.target.value;
+  const selStart = e.target.selectionStart, selEnd = e.target.selectionEnd;
+  setOverride(cat, key, rawTyped === '' ? '' : Number(rawTyped));
+  renderAll();
+  const again = document.querySelector(`.price-input[data-cat="${cat}"][data-key="${key}"]`);
+  if(again){
+    again.value = rawTyped;
+    again.focus();
+    try{ again.setSelectionRange(selStart, selEnd); }catch(_){}
+  }
+});
+
+/* ---------------- init ---------------- */
+/* ---------------- PDF export ---------------- */
+/* ---------------- Professional PDF Export ---------------- */
+function generatePDF() {
+  const btn = document.getElementById('pdfBtn');
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 20;
+
+    // ----- Currency Symbol Mapping -----
+    const symbolMap = {
+      'NG': { symbol: '₦', fallback: 'NGN' },
+      'US': { symbol: '$', fallback: 'USD' },
+      'GB': { symbol: '£', fallback: 'GBP' },
+      'IN': { symbol: '₹', fallback: 'INR' },
+      'KE': { symbol: 'KSh', fallback: 'KES' },
+      'ZA': { symbol: 'R', fallback: 'ZAR' },
+      'GH': { symbol: 'GH₵', fallback: 'GHS' },
+      'EG': { symbol: 'E£', fallback: 'EGP' },
+      'DE': { symbol: '€', fallback: 'EUR' },
+      'FR': { symbol: '€', fallback: 'EUR' },
+      'ES': { symbol: '€', fallback: 'EUR' },
+      'IT': { symbol: '€', fallback: 'EUR' },
+      'NL': { symbol: '€', fallback: 'EUR' },
+      'CN': { symbol: '¥', fallback: 'CNY' },
+      'JP': { symbol: '¥', fallback: 'JPY' },
+      'SG': { symbol: 'S$', fallback: 'SGD' },
+      'ID': { symbol: 'Rp', fallback: 'IDR' },
+      'AE': { symbol: 'AED', fallback: 'AED' },
+      'CA': { symbol: 'C$', fallback: 'CAD' },
+      'AU': { symbol: 'A$', fallback: 'AUD' },
+    };
+    
+    const countryCode = state.country || 'US';
+    const currencyInfo = symbolMap[countryCode] || { symbol: '$', fallback: 'USD' };
+
+    // ----- Helper to format money -----
+    function fmtPDF(v) {
+      const clamped = Math.min(Math.max(v || 0, 0), 1000000000000);
+      if (countryCode === 'NG') {
+        return `NGN ${Math.round(clamped).toLocaleString()}`;
+      }
+      return currencyInfo.symbol + Math.round(clamped).toLocaleString();
+    }
+// ----- Theme Toggle (Dark/Light Mode) -----
+function setTheme(theme) {
+  const toggle = document.getElementById('themeToggle');
+  if (theme === 'light') {
+    document.body.classList.add('light-mode');
+    if (toggle) toggle.textContent = '☀️';
+  } else {
+    document.body.classList.remove('light-mode');
+    if (toggle) toggle.textContent = '🌙';
+  }
+  localStorage.setItem('budgetpro_theme', theme);
+}
+
+// Apply saved theme on load
+const savedTheme = localStorage.getItem('budgetpro_theme') || 'dark';
+setTheme(savedTheme);
+
+// Toggle on click
+document.addEventListener('click', function(e) {
+  if (e.target && e.target.id === 'themeToggle') {
+    const current = localStorage.getItem('budgetpro_theme') || 'dark';
+    setTheme(current === 'dark' ? 'light' : 'dark');
+  }
+});
+    // ----- Country Name -----
+    const countryMap = {
+      'NG': 'Nigeria', 'US': 'United States', 'GB': 'United Kingdom',
+      'IN': 'India', 'KE': 'Kenya', 'ZA': 'South Africa',
+      'GH': 'Ghana', 'EG': 'Egypt', 'DE': 'Germany',
+      'FR': 'France', 'ES': 'Spain', 'IT': 'Italy',
+      'NL': 'Netherlands', 'CN': 'China', 'JP': 'Japan',
+      'SG': 'Singapore', 'ID': 'Indonesia', 'AE': 'UAE',
+      'CA': 'Canada', 'AU': 'Australia',
+    };
+    const countryName = countryMap[countryCode] || 'Unknown';
+
+    // ----- RECALCULATE EVERYTHING FROM STATE (not lastSummary) -----
+    const c = countryData[countryCode];
+    const sqm = state.sqm || 0;
+    const floors = state.floors || 1;
+    const quality = state.quality || 'mid';
+    const furnish = state.furnish || false;
+
+    // Helper: get override or default
+    function getVal(cat, key, def) {
+      const ov = getOverride(cat, key);
+      return ov !== undefined ? ov : def;
+    }
+
+    // ----- Phase 1: Materials -----
+    const materials = [
+      { key: 'cementPerBag', qtyPerSqm: 0.45, round: 'up' },
+      { key: 'rebarPerTon', qtyPerSqm: 0.018, round: 'dec' },
+      { key: 'sandPerTon', qtyPerSqm: 0.040, round: 'dec' },
+      { key: 'gravelPerTon', qtyPerSqm: 0.035, round: 'dec' },
+      { key: 'blocksPerPiece', qtyPerSqm: 9.5, round: 'up' },
+      { key: 'roofingSheet', qtyPerSqm: 0.18, round: 'up' },
+      { key: 'timberPerPlank', qtyPerSqm: 0.25, round: 'up' },
+      { key: 'tilesPerSqm', qtyPerSqm: 1.08, round: 'dec' },
+      { key: 'paintPerBucket', qtyPerSqm: 0.045, round: 'up' },
+      { key: 'doorUnit', qtyPerSqm: 0.018, round: 'up' },
+      { key: 'windowUnit', qtyPerSqm: 0.035, round: 'up' },
+      { key: 'electricalWirePerMeter', qtyPerSqm: 2.8, round: 'dec' },
+      { key: 'plumbingLumpPerSqm', qtyPerSqm: 1, round: 'dec' },
+    ];
+
+    const qualityQtyMult = { basic: 0.85, mid: 1.0, luxury: 1.15 };
+    const qualityPriceMult = { basic: 1.0, mid: 1.0, luxury: 1.30 };
+    const floorMult = 1 + (floors - 1) * 0.07;
+
+    let materialsSubtotal = 0;
+    materials.forEach(m => {
+      const basePrice = c.construction[m.key];
+      const price = getVal('construction', m.key, basePrice) * qualityPriceMult[quality];
+      const qty = m.qtyPerSqm * sqm * floorMult * qualityQtyMult[quality];
+      const displayQty = m.round === 'up' ? Math.max(1, Math.ceil(qty)) : qty;
+      materialsSubtotal += displayQty * price;
+    });
+
+    // ----- Phase 2: Finishing, Furnishing, Labor, Fees -----
+    const cleanBase = c.construction.cleaningPerSqm;
+    const cleanPrice = getVal('construction', 'cleaningPerSqm', cleanBase);
+    const cleaningCost = cleanPrice * sqm;
+
+    let furnishingTotal = 0;
+    if (furnish) {
+      const f = c.furnishing;
+      const bedrooms = Math.max(1, Math.round(sqm / 70));
+      furnishingTotal += getVal('furnishing', 'livingRoomSet', f.livingRoomSet);
+      furnishingTotal += getVal('furnishing', 'bedroomSet', f.bedroomSet) * bedrooms;
+      furnishingTotal += getVal('furnishing', 'kitchenAppliances', f.kitchenAppliances);
+      furnishingTotal += getVal('furnishing', 'curtainsPerSqm', f.curtainsPerSqm) * sqm;
+    }
+
+    const laborRate = getVal('construction', 'laborMultiplier', c.construction.laborMultiplier);
+    const laborCost = materialsSubtotal * laborRate;
+
+    const archRate = getVal('construction', 'archFeeMultiplier', c.construction.archFeeMultiplier);
+    const archCost = materialsSubtotal * archRate;
+
+    const phase2Subtotal = cleaningCost + furnishingTotal + laborCost + archCost;
+
+    // ----- Phase 3: Utilities -----
+    const wattsMap = { basic: 35, mid: 50, luxury: 70 };
+    const watts = wattsMap[quality] || 50;
+    const monthlyKwh = (sqm * watts * 6 * 30) / 1000;
+    const elPrice = getVal('utilities', 'electricityPerKwh', c.utilities.electricityPerKwh);
+    const electricityCost = monthlyKwh * elPrice;
+
+    const people = Math.max(1, Math.ceil(sqm / 30));
+    const waterM3 = people * 4;
+    const waterPrice = getVal('utilities', 'waterTariffPerM3', c.utilities.waterTariffPerM3);
+    const waterCost = waterM3 * waterPrice;
+
+    const gasPrice = getVal('utilities', 'gasCylinder', c.utilities.gasCylinder);
+    const gasCost = 2 * gasPrice;
+
+    const wastePrice = getVal('utilities', 'wasteDisposal', c.utilities.wasteDisposal);
+    const wasteCost = wastePrice;
+
+    const monthlyTotal = electricityCost + waterCost + gasCost + wasteCost;
+    const grandTotal = materialsSubtotal + phase2Subtotal;
+
+    // ----- HEADER -----
+    doc.setFillColor(10, 22, 40);
+    doc.rect(0, 0, pageWidth, 45, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.setTextColor(245, 166, 35);
+    doc.text('BudgetPro', 14, 30);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(255, 255, 255);
+    doc.text('Construction Estimate', 14, 40);
+
+    doc.setFontSize(9);
+    doc.setTextColor(140, 150, 180);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}  |  ${countryName} (${countryCode})`, 14, 52);
+    y = 62;
+
+    // ----- SECTION 1: Project Parameters -----
+    doc.setDrawColor(245, 166, 35);
+    doc.setLineWidth(0.5);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Project Parameters', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+
+    doc.text(`Floor Area: ${sqm} m²`, 14, y); y += 6;
+    doc.text(`Floors: ${floors}`, 14, y); y += 6;
+    doc.text(`Build Quality: ${quality}`, 14, y); y += 6;
+    doc.text(`Furnishing: ${furnish ? 'Included' : 'Excluded'}`, 14, y); y += 10;
+
+    // ----- SECTION 2: Cost Breakdown -----
+    doc.setDrawColor(245, 166, 35);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Cost Breakdown', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+
+    doc.text(`Materials (Phase 1): ${fmtPDF(materialsSubtotal)}`, 14, y); y += 6;
+    doc.text(`  └─ Cleaning: ${fmtPDF(cleaningCost)}`, 20, y); y += 5;
+    doc.text(`  └─ Furnishing: ${fmtPDF(furnishingTotal)}`, 20, y); y += 5;
+    doc.text(`  └─ Labor: ${fmtPDF(laborCost)}`, 20, y); y += 5;
+    doc.text(`  └─ Architect / Engineer: ${fmtPDF(archCost)}`, 20, y); y += 6;
+    doc.text(`Finishing, Furnishing, Labor & Fees (Phase 2): ${fmtPDF(phase2Subtotal)}`, 14, y); y += 8;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(245, 166, 35);
+    doc.text(`Total Construction + Furnishing Cost: ${fmtPDF(grandTotal)}`, 14, y); y += 10;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+    doc.text(`Total Monthly Running Cost (Utilities, Phase 3): ${fmtPDF(monthlyTotal)}`, 14, y); y += 12;
+
+    // ----- SECTION 3: Utility Breakdown -----
+    doc.setDrawColor(245, 166, 35);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Monthly Utility Breakdown', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 80);
+
+    doc.text(`Electricity: ${fmtPDF(electricityCost)}/mo (${monthlyKwh.toFixed(0)} kWh @ ${fmtPDF(elPrice)}/kWh)`, 14, y); y += 5;
+    doc.text(`Water: ${fmtPDF(waterCost)}/mo (${waterM3} m³ @ ${fmtPDF(waterPrice)}/m³)`, 14, y); y += 5;
+    doc.text(`Gas: ${fmtPDF(gasCost)}/mo (2 cylinders @ ${fmtPDF(gasPrice)}/cylinder)`, 14, y); y += 5;
+    doc.text(`Waste Disposal: ${fmtPDF(wasteCost)}/mo`, 14, y); y += 10;
+
+    // ----- SECTION 4: Recommendations -----
+    doc.setDrawColor(245, 166, 35);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Smart Recommendations', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 80);
+
+    const recItems = document.querySelectorAll('#recList li');
+    if (recItems && recItems.length > 0) {
+      recItems.forEach((li) => {
+        const text = li.textContent || 'Adjust the sliders to see personalized recommendations.';
+        const lines = doc.splitTextToSize(text, pageWidth - 28);
+        doc.text(lines, 14, y);
+        y += lines.length * 5 + 3;
+        if (y > 260) {
+          doc.addPage();
+          y = 20;
+        }
+      });
+    } else {
+      doc.text('Adjust the sliders to see personalized recommendations.', 14, y);
+      y += 6;
+    }
+
+    // ----- FOOTER -----
+    doc.setFontSize(8);
+    doc.setTextColor(140, 140, 140);
+    doc.text('All figures are editable local-market placeholders, not professional quotes.', 14, 280);
+
+    doc.save(`BudgetPro-Construction-${countryCode}.pdf`);
+  } catch (err) {
+    console.error('PDF Error:', err);
+    alert('PDF generation failed: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📄 Download PDF Summary';
+  }
+}
+document.getElementById('pdfBtn').addEventListener('click', generatePDF);
+
+function init(){
+  populateCountries();
+  document.getElementById('sqmSlider').value = state.sqm;
+  document.getElementById('floorsSlider').value = state.floors;
+  document.getElementById('furnishToggle').checked = state.furnish;
+  document.querySelectorAll('#qualitySeg button').forEach(b=>b.classList.toggle('active', b.dataset.q===state.quality));
+  renderAll();
+}
+init();
+</script>
+</body>
+</html>
+
