@@ -1,0 +1,61 @@
+name: Daily Blog Post Generator
+
+on:
+  schedule:
+    # Runs daily at 6:00 AM UTC (7:00 AM WAT Nigeria time)
+    - cron: '0 6 * * *'
+  workflow_dispatch: # Allow manual trigger from GitHub UI
+
+permissions:
+  contents: write
+
+jobs:
+  generate-post:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        working-directory: ./scripts
+        run: npm install
+
+      - name: Generate blog post
+        id: generate
+        working-directory: ./scripts
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
+        run: node fetch-news.mjs
+
+      - name: Update blog index
+        run: node scripts/update-blog-index.mjs
+
+      - name: Commit and push
+        run: |
+          git config user.name "BudgetPro Bot"
+          git config user.email "bot@budgetpro.com.ng"
+          git add blog/ index.html
+          if git diff --staged --quiet; then
+            echo "No new content to commit"
+          else
+            git commit -m "🤖 Auto-blog: ${{ steps.generate.outputs.title }}"
+            git push
+          fi
+
+      - name: Trigger Vercel deploy
+        if: steps.generate.outputs.slug != ''
+        run: |
+          if [ -n "${{ secrets.VERCEL_DEPLOY_HOOK }}" ]; then
+            curl -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}"
+          else
+            echo "No Vercel deploy hook set — Vercel will auto-deploy via GitHub integration"
+          fi

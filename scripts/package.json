@@ -1,0 +1,13 @@
+{
+  "name": "budgetpro-blog-bot",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "generate": "node fetch-news.mjs"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "rss-parser": "^3.13.0"
+  }
+}
