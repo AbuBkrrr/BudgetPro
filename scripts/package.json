@@ -7,7 +7,9 @@
     "generate": "node fetch-news.mjs"
   },
   "dependencies": {
+    "@google/genai": "^2.24.0",
     "@google/generative-ai": "^0.21.0",
+    "groq-sdk": "^1.6.0",
     "rss-parser": "^3.13.0"
   }
 }
