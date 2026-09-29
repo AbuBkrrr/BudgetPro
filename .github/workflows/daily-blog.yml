@@ -28,8 +28,12 @@ jobs:
         working-directory: ./scripts
         run: npm install
 
+      # KEY CHANGE: continue-on-error so a Gemini 503 doesn't fail the whole run.
+      # If all models are overloaded, the workflow just skips the commit step
+      # and tries again the next day.
       - name: Generate blog post
         id: generate
+        continue-on-error: true
         working-directory: ./scripts
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -37,9 +41,11 @@ jobs:
         run: node fetch-news.mjs
 
       - name: Update blog index
+        if: steps.generate.outputs.slug != ''
         run: node scripts/update-blog-index.mjs
 
       - name: Commit and push
+        if: steps.generate.outputs.slug != ''
         run: |
           git config user.name "BudgetPro Bot"
           git config user.email "bot@budgetpro.com.ng"
@@ -59,3 +65,11 @@ jobs:
           else
             echo "No Vercel deploy hook set — Vercel will auto-deploy via GitHub integration"
           fi
+
+      # Optional: this makes it obvious in the run summary when a run was skipped
+      - name: Report skip reason
+        if: steps.generate.outputs.slug == ''
+        run: |
+          echo "⚠️ Blog post was NOT generated this run."
+          echo "This usually means all Gemini models were overloaded (503)."
+          echo "The workflow will try again at the next scheduled run."
