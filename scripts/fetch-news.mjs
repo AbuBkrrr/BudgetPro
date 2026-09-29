@@ -88,7 +88,7 @@ async function generatePost(articles) {
   if (!apiKey) throw new Error('GEMINI_API_KEY not set');
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-3.8-flash' });
 
   const newsDigest = articles.map((a, i) =>
     `${i + 1}. "${a.title}" (${a.source})\n   ${a.snippet}`
