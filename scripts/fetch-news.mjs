@@ -25,6 +25,18 @@ const RSS_FEEDS = [
 ];
 
 // ---------------------------------------------------------------
+// Gemini model fallback chain — newest first, older (more stable) last.
+// Capacity is per-model, so if one is overloaded (503), the next often works.
+// ---------------------------------------------------------------
+const MODEL_CHAIN = [
+  'gemini-3.8-flash',
+  'gemini-3.7-flash',
+  'gemini-3.6-flash',
+  'gemini-3.5-flash',
+  'gemini-2.5-flash',
+];
+
+// ---------------------------------------------------------------
 // Keyword filter — only keep articles relevant to BudgetPro's tools
 // ---------------------------------------------------------------
 const RELEVANT_KEYWORDS = [
@@ -36,6 +48,11 @@ const RELEVANT_KEYWORDS = [
   'real estate', 'property', 'rent', 'land',
   'business', 'startup', 'SME', 'entrepreneur',
 ];
+
+// ---------------------------------------------------------------
+// Sleep helper
+// ---------------------------------------------------------------
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ---------------------------------------------------------------
 // Fetch and filter news
@@ -77,7 +94,55 @@ async function fetchNews() {
   // Sort by date, newest first
   unique.sort((a, b) => new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
 
-  return unique.slice(0, 8); // top 8 stories
+  return unique.slice(0, 8);
+}
+
+// ---------------------------------------------------------------
+// Robust Gemini call: exponential backoff + model fallback chain
+// ---------------------------------------------------------------
+async function callGemini(genAI, prompt) {
+  let lastError = null;
+
+  // Try each model in the fallback chain
+  for (const modelName of MODEL_CHAIN) {
+    const model = genAI.getGenerativeModel({ model: modelName });
+    const maxAttempts = 3;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        console.log(`   → ${modelName} (attempt ${attempt}/${maxAttempts})`);
+        const result = await model.generateContent(prompt);
+        console.log(`   ✅ Success with ${modelName}`);
+        return result.response.text();
+      } catch (err) {
+        lastError = err;
+        const msg = String(err.message || err);
+
+        // Only retry on transient errors: 503, 500, 429, overloaded, etc.
+        const isTransient =
+          /\b(503|500|429)\b/.test(msg) ||
+          /overloaded|high demand|UNAVAILABLE|RESOURCE_EXHAUSTED|temporarily/i.test(msg);
+
+        if (!isTransient) {
+          console.log(`   ❌ ${modelName} non-retryable: ${msg.slice(0, 100)}`);
+          break; // move to next model in chain
+        }
+
+        if (attempt < maxAttempts) {
+          // Exponential backoff with jitter: 2s, 4s, 8s + random 0-1s
+          const baseDelay = Math.min(8000, Math.pow(2, attempt) * 1000);
+          const jitter = Math.floor(Math.random() * 1000);
+          const delay = baseDelay + jitter;
+          console.log(`   ⚠️  Overloaded. Retrying in ${(delay / 1000).toFixed(1)}s...`);
+          await sleep(delay);
+        }
+      }
+    }
+
+    console.log(`   ↪️  Falling back to next model...`);
+  }
+
+  throw new Error(`All models failed. Last error: ${lastError?.message}`);
 }
 
 // ---------------------------------------------------------------
@@ -88,13 +153,12 @@ async function generatePost(articles) {
   if (!apiKey) throw new Error('GEMINI_API_KEY not set');
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-3.8-flash' });
 
   const newsDigest = articles.map((a, i) =>
     `${i + 1}. "${a.title}" (${a.source})\n   ${a.snippet}`
   ).join('\n\n');
 
-  const prompt = `You are a financial journalist writing for BudgetPro, a Nigerian financial calculator site.
+  const bodyPrompt = `You are a financial journalist writing for BudgetPro, a Nigerian financial calculator site.
 
 Below are the top financial news stories from Nigeria today:
 
@@ -117,18 +181,18 @@ CRITICAL RULES:
 
 Return ONLY the blog post body content in Markdown format. Do NOT include the title or metadata.`;
 
-  const result = await model.generateContent(prompt);
-  const body = result.response.text();
+  console.log('🤖 Generating blog post body...');
+  const body = await callGemini(genAI, bodyPrompt);
 
-  // Generate a title
   const titlePrompt = `Write a single-line SEO-optimized blog post title (max 70 characters) for a Nigerian financial blog post based on these stories:
 
 ${articles.slice(0, 2).map(a => a.title).join('\n')}
 
 Return ONLY the title. No quotes. No "Title:" prefix.`;
 
-  const titleResult = await model.generateContent(titlePrompt);
-  const title = titleResult.response.text().trim().replace(/^["']|["']$/g, '');
+  console.log('🤖 Generating title...');
+  const titleRaw = await callGemini(genAI, titlePrompt);
+  const title = titleRaw.trim().replace(/^["']|["']$/g, '').split('\n')[0];
 
   return { title, body };
 }
@@ -147,7 +211,6 @@ function markdownToHtml(md) {
     .replace(/^\- (.*$)/gm, '<li>$1</li>')
     .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
     .replace(/\n\n/g, '</p><p>')
-    .replace(/^(?!<[hul])/gm, '')
     .split('\n')
     .filter(line => line.trim())
     .map(line => {
