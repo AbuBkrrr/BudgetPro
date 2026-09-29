@@ -1,8 +1,9 @@
 // scripts/fetch-news.mjs
-// Fetches Nigerian financial news from RSS feeds and NewsAPI,
-// then generates a blog post via Gemini (with multi-provider fallback).
+// Fetches Nigerian financial news from RSS feeds,
+// then generates a blog post via Groq (primary) with Gemini fallback.
 
 import Parser from 'rss-parser';
+import Groq from 'groq-sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import fs from 'fs/promises';
 import path from 'path';
@@ -25,20 +26,25 @@ const RSS_FEEDS = [
 ];
 
 // ---------------------------------------------------------------
-// MODEL FALLBACK CHAIN
-// Ordered: newest & best first, oldest & most stable last.
-// If a model returns 503/429, we retry it 3 times with backoff,
-// then move to the next model in the chain.
+// GROQ MODEL CHAIN (primary provider)
+// Ordered: best quality first, fastest/most-available last.
 // ---------------------------------------------------------------
-const MODEL_CHAIN = [
-  'gemini-3.8-flash',        // newest, but heavily loaded
-  'gemini-3.8-flash-lite',   // lighter sibling, often has capacity
+const GROQ_MODELS = [
+  'llama-3.3-70b-versatile',
+  'meta-llama/llama-4-maverick-17b-128e-instruct',
+  'meta-llama/llama-4-scout-17b-16e-instruct',
+  'qwen/qwen3-32b',
+  'llama-3.1-8b-instant',
+];
+
+// ---------------------------------------------------------------
+// GEMINI MODEL CHAIN (fallback provider)
+// ---------------------------------------------------------------
+const GEMINI_MODELS = [
+  'gemini-3.8-flash',
   'gemini-3.7-flash',
-  'gemini-3.7-flash-lite',
   'gemini-3.6-flash',
   'gemini-3.5-flash',
-  'gemini-3.0-flash',
-  'gemini-2.5-flash',
 ];
 
 // ---------------------------------------------------------------
@@ -54,9 +60,6 @@ const RELEVANT_KEYWORDS = [
   'business', 'startup', 'SME', 'entrepreneur',
 ];
 
-// ---------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ---------------------------------------------------------------
@@ -64,7 +67,6 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // ---------------------------------------------------------------
 async function fetchNews() {
   const allArticles = [];
-
   for (const feed of RSS_FEEDS) {
     try {
       console.log(`Fetching: ${feed.url}`);
@@ -94,93 +96,138 @@ async function fetchNews() {
     seen.add(a.title);
     return true;
   });
-
   unique.sort((a, b) => new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
   return unique.slice(0, 8);
 }
 
 // ---------------------------------------------------------------
-// ROBUST GEMINI CALLER
-// Strategy:
-//   1. For each model in MODEL_CHAIN:
-//        - Try the model once.
-//        - If it fails with a transient error (503/500/429/overloaded),
-//          wait 2s → 4s → 8s and retry (3 total attempts).
-//        - If still failing, move on to next model.
-//   2. If ALL models fail, throw a clear error.
+// GROQ CALLER — with retry + model fallback
 // ---------------------------------------------------------------
-async function callGemini(genAI, prompt) {
+async function callGroq(prompt) {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    console.log('   ⚠️  GROQ_API_KEY not set — skipping Groq');
+    return null;
+  }
+
+  const client = new Groq({ apiKey });
   let lastError = null;
-  const MAX_ATTEMPTS_PER_MODEL = 3;
 
-  for (let mi = 0; mi < MODEL_CHAIN.length; mi++) {
-    const modelName = MODEL_CHAIN[mi];
-    let model;
-    try {
-      model = genAI.getGenerativeModel({ model: modelName });
-    } catch (initErr) {
-      console.log(`   ⚠️  Cannot init ${modelName}: ${initErr.message}`);
-      continue;
-    }
-
-    for (let attempt = 1; attempt <= MAX_ATTEMPTS_PER_MODEL; attempt++) {
+  for (let mi = 0; mi < GROQ_MODELS.length; mi++) {
+    const model = GROQ_MODELS[mi];
+    for (let attempt = 1; attempt <= 3; attempt++) {
       try {
-        console.log(`   → [${mi + 1}/${MODEL_CHAIN.length}] ${modelName} (attempt ${attempt}/${MAX_ATTEMPTS_PER_MODEL})`);
-        const result = await model.generateContent(prompt);
-        const text = result.response.text();
+        console.log(`   🟢 [Groq ${mi + 1}/${GROQ_MODELS.length}] ${model} (attempt ${attempt}/3)`);
+        const completion = await client.chat.completions.create({
+          messages: [{ role: 'user', content: prompt }],
+          model,
+          temperature: 0.7,
+          max_tokens: 4000,
+        });
+        const text = completion.choices?.[0]?.message?.content || '';
         if (!text || text.trim().length < 20) {
-          throw new Error('Empty response from model');
+          throw new Error('Empty response from Groq');
         }
-        console.log(`   ✅ Success with ${modelName}`);
+        console.log(`   ✅ Groq success with ${model}`);
         return text;
       } catch (err) {
         lastError = err;
         const msg = String(err.message || err);
-
         const isTransient =
-          /\b(503|500|429)\b/.test(msg) ||
-          /overloaded|high demand|unavailable|resource[_\s-]?exhausted|temporarily|rate[_\s-]?limit/i.test(msg);
-
-        const isModelGone =
-          /\b(404)\b/.test(msg) ||
-          /not found|no longer available|is not supported|deprecated/i.test(msg);
-
-        if (isModelGone) {
-          console.log(`   ❌ ${modelName} no longer available — skipping`);
-          break; // skip to next model
-        }
+          /\b(429|500|502|503|504)\b/.test(msg) ||
+          /rate[_\s-]?limit|overloaded|timeout|unavailable/i.test(msg);
 
         if (!isTransient) {
-          console.log(`   ❌ ${modelName} non-retryable error: ${msg.slice(0, 100)}`);
-          break; // skip to next model
+          console.log(`   ❌ Groq ${model} non-retryable: ${msg.slice(0, 100)}`);
+          break; // next model
         }
-
-        if (attempt < MAX_ATTEMPTS_PER_MODEL) {
-          // Exponential backoff with jitter: 2s, 4s, 8s + random 0–1s
-          const baseDelay = Math.min(8000, Math.pow(2, attempt) * 1000);
-          const jitter = Math.floor(Math.random() * 1000);
-          const delay = baseDelay + jitter;
-          console.log(`   ⚠️  Overloaded. Retrying in ${(delay / 1000).toFixed(1)}s...`);
+        if (attempt < 3) {
+          const delay = Math.min(8000, Math.pow(2, attempt) * 1000) + Math.floor(Math.random() * 1000);
+          console.log(`   ⚠️  Groq rate-limited. Retrying in ${(delay / 1000).toFixed(1)}s...`);
           await sleep(delay);
         }
       }
     }
-
-    console.log(`   ↪️  ${modelName} exhausted. Moving to next model...`);
+    console.log(`   ↪️  Groq ${model} exhausted. Next model...`);
   }
 
-  throw new Error(`❌ ALL ${MODEL_CHAIN.length} models failed. Last error: ${lastError?.message || lastError}`);
+  console.log(`   ❌ All Groq models failed. Last error: ${lastError?.message}`);
+  return null;
 }
 
 // ---------------------------------------------------------------
-// Generate blog post with Gemini
+// GEMINI CALLER — with retry + model fallback
 // ---------------------------------------------------------------
-async function generatePost(articles) {
+async function callGemini(prompt) {
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error('GEMINI_API_KEY not set');
+  if (!apiKey) {
+    console.log('   ⚠️  GEMINI_API_KEY not set — skipping Gemini');
+    return null;
+  }
 
   const genAI = new GoogleGenerativeAI(apiKey);
+  let lastError = null;
 
+  for (let mi = 0; mi < GEMINI_MODELS.length; mi++) {
+    const modelName = GEMINI_MODELS[mi];
+    let model;
+    try {
+      model = genAI.getGenerativeModel({ model: modelName });
+    } catch (e) {
+      console.log(`   ⚠️  Cannot init ${modelName}: ${e.message}`);
+      continue;
+    }
+
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        console.log(`   🔵 [Gemini ${mi + 1}/${GEMINI_MODELS.length}] ${modelName} (attempt ${attempt}/3)`);
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+        if (!text || text.trim().length < 20) throw new Error('Empty response');
+        console.log(`   ✅ Gemini success with ${modelName}`);
+        return text;
+      } catch (err) {
+        lastError = err;
+        const msg = String(err.message || err);
+        const isGone = /\b404\b/.test(msg) || /no longer available|not found|deprecated/i.test(msg);
+        const isTransient =
+          /\b(503|500|429)\b/.test(msg) ||
+          /overloaded|high demand|unavailable|resource[_\s-]?exhausted/i.test(msg);
+
+        if (isGone) { console.log(`   ❌ ${modelName} retired — skip`); break; }
+        if (!isTransient) { console.log(`   ❌ ${modelName} non-retryable`); break; }
+        if (attempt < 3) {
+          const delay = Math.min(8000, Math.pow(2, attempt) * 1000) + Math.floor(Math.random() * 1000);
+          console.log(`   ⚠️  Gemini overloaded. Retrying in ${(delay / 1000).toFixed(1)}s...`);
+          await sleep(delay);
+        }
+      }
+    }
+    console.log(`   ↪️  Gemini ${modelName} exhausted. Next model...`);
+  }
+
+  console.log(`   ❌ All Gemini models failed. Last error: ${lastError?.message}`);
+  return null;
+}
+
+// ---------------------------------------------------------------
+// MASTER CALLER — Groq first, Gemini as backup
+// ---------------------------------------------------------------
+async function callLLM(prompt) {
+  const groqResult = await callGroq(prompt);
+  if (groqResult) return groqResult;
+
+  console.log('   🔄 Groq failed. Switching to Gemini fallback...');
+  const geminiResult = await callGemini(prompt);
+  if (geminiResult) return geminiResult;
+
+  throw new Error('All LLM providers failed');
+}
+
+// ---------------------------------------------------------------
+// Generate blog post
+// ---------------------------------------------------------------
+async function generatePost(articles) {
   const newsDigest = articles.map((a, i) =>
     `${i + 1}. "${a.title}" (${a.source})\n   ${a.snippet}`
   ).join('\n\n');
@@ -209,7 +256,7 @@ CRITICAL RULES:
 Return ONLY the blog post body content in Markdown format. Do NOT include the title or metadata.`;
 
   console.log('🤖 Generating blog post body...');
-  const body = await callGemini(genAI, bodyPrompt);
+  const body = await callLLM(bodyPrompt);
 
   const titlePrompt = `Write a single-line SEO-optimized blog post title (max 70 characters) for a Nigerian financial blog post based on these stories:
 
@@ -218,7 +265,7 @@ ${articles.slice(0, 2).map(a => a.title).join('\n')}
 Return ONLY the title. No quotes. No "Title:" prefix.`;
 
   console.log('🤖 Generating title...');
-  const titleRaw = await callGemini(genAI, titlePrompt);
+  const titleRaw = await callLLM(titlePrompt);
   const title = titleRaw.trim().replace(/^["']|["']$/g, '').split('\n')[0].slice(0, 100);
 
   return { title, body };
@@ -238,19 +285,16 @@ function markdownToHtml(md) {
     .replace(/^\- (.*$)/gm, '<li>$1</li>')
     .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
     .replace(/\n\n/g, '</p><p>')
-    .split('\n')
-    .filter(line => line.trim())
+    .split('\n').filter(line => line.trim())
     .map(line => {
-      if (line.startsWith('<h') || line.startsWith('<ul') || line.startsWith('<li')) {
-        return line;
-      }
+      if (line.startsWith('<h') || line.startsWith('<ul') || line.startsWith('<li')) return line;
       return `<p>${line}</p>`;
     })
     .join('\n');
 }
 
 // ---------------------------------------------------------------
-// Build full HTML page
+// Build HTML page
 // ---------------------------------------------------------------
 function buildHTML(title, body, articles) {
   const slug = title.toLowerCase()
@@ -259,11 +303,9 @@ function buildHTML(title, body, articles) {
     .slice(0, 80);
 
   const htmlBody = markdownToHtml(body);
-
   const sourcesHtml = articles.map(a =>
     `<li><a href="${a.link}" target="_blank" rel="noopener">${a.title}</a> — <em>${a.source}</em></li>`
   ).join('\n');
-
   const date = new Date().toISOString().split('T')[0];
 
   return { slug, html: `<!DOCTYPE html>
@@ -309,9 +351,7 @@ ${htmlBody}
 </div>
 </body>
 </html>`,
-    title,
-    date,
-  };
+    title, date };
 }
 
 // ---------------------------------------------------------------
@@ -327,12 +367,11 @@ async function main() {
     return;
   }
 
-  console.log('🤖 Generating blog post with Gemini...');
+  console.log('🤖 Generating blog post...');
   const { title, body } = await generatePost(articles);
   console.log(`   Title: ${title}`);
 
   const { slug, html } = buildHTML(title, body, articles);
-
   const outputPath = path.join('blog', `${slug}.html`);
   await fs.writeFile(outputPath, html, 'utf-8');
   console.log(`✅ Written: ${outputPath}`);
