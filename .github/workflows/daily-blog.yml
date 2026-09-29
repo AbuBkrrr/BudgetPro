@@ -73,3 +73,13 @@ jobs:
           echo "⚠️ Blog post was NOT generated this run."
           echo "This usually means all Gemini models were overloaded (503)."
           echo "The workflow will try again at the next scheduled run."
+
+      - name: Generate blog post
+        id: generate
+        continue-on-error: true
+        working-directory: ./scripts
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
+        run: node fetch-news.mjs
