@@ -328,6 +328,42 @@ body.light-mode .gn-link.active {
   }
   .manual-input:focus{outline:1px solid var(--gold);}
 </style>
+
+<!-- ===== ADSENSE ===== -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2229008759020664" crossorigin="anonymous"></script>
+
+<!-- BudgetPro -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-2229008759020664"
+     data-ad-slot="9906420300"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<!-- Budgetpro manual -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-2229008759020664"
+     data-ad-slot="6768946061"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+<!-- ===== END ADSENSE ===== -->
+
+<!-- ===== GOOGLE ANALYTICS ===== -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XEZBWF9ZVB"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XEZBWF9ZVB');
+</script>
+<!-- ===== END GOOGLE ANALYTICS ===== -->
 </head>
 <body>
 
@@ -374,33 +410,33 @@ body.light-mode .gn-link.active {
       <div class="field">
         <label>Car Price (base) <span class="val" id="priceVal">25,000</span></label>
         <input type="range" id="priceSlider" min="0" max="999999999" step="500" value="25000">
-        <input type="number" class="manual-input" id="priceManual" min="0" max="999999999" step="500" value="25000" aria-label="price manual entry">
+        <input type="text" inputmode="numeric" class="manual-input" id="priceManual" min="0" max="999999999" step="500" value="25000" aria-label="price manual entry">
       </div>
       <div class="field">
         <label>Down Payment / Trade-in <span class="val" id="downVal">20%</span></label>
         <input type="range" id="downSlider" min="0" max="100" step="1" value="20">
-        <input type="number" class="manual-input" id="downManual" min="0" max="100" step="1" value="20" aria-label="down payment percent manual entry">
+        <input type="text" inputmode="numeric" class="manual-input" id="downManual" min="0" max="100" step="1" value="20" aria-label="down payment percent manual entry">
       </div>
       <div class="field">
         <label>Loan Term <span class="val" id="termVal">60 mo</span></label>
         <input type="range" id="termSlider" min="0" max="84" step="6" value="60">
-        <input type="number" class="manual-input" id="termManual" min="0" max="84" step="6" value="60" aria-label="term manual entry">
+        <input type="text" inputmode="numeric" class="manual-input" id="termManual" min="0" max="84" step="6" value="60" aria-label="term manual entry">
       </div>
       <div class="field">
         <label>Interest Rate (APR) <span class="val" id="rateVal">7.5%</span></label>
         <input type="range" id="rateSlider" min="0" max="50" step="0.1" value="7.5">
-        <input type="number" class="manual-input" id="rateManual" min="0" max="50" step="0.1" value="7.5" aria-label="rate manual entry">
+        <input type="text" inputmode="numeric" class="manual-input" id="rateManual" min="0" max="50" step="0.1" value="7.5" aria-label="rate manual entry">
       </div>
       <div class="field">
         <label>Annual Distance(km) <span class="val" id="mileageVal">12,000</span></label>
         <input type="range" id="mileageSlider" min="100" max="600000" step="500" value="12000">
-        <input type="number" class="manual-input" id="mileageManual" min="100" max="600000" step="500" value="12000" aria-label="mileage manual entry">
+        <input type="text" inputmode="numeric" class="manual-input" id="mileageManual" min="100" max="600000" step="500" value="12000" aria-label="mileage manual entry">
       </div>
       <div class="field">
         <label>Efficiency <span class="val" id="efficiencyVal">28</span></label>
         <div class="line-note" id="efficiencyUnitLabel" style="margin-bottom:4px;">distance / liter</div>
         <input type="range" id="efficiencySlider" min="1" max="60" step="1" value="28">
-        <input type="number" class="manual-input" id="efficiencyManual" min="1" max="60" step="1" value="28" aria-label="efficiency manual entry">
+        <input type="text" inputmode="numeric" class="manual-input" id="efficiencyManual" min="1" max="60" step="1" value="28" aria-label="efficiency manual entry">
       </div>
       <div class="field field-wide">
         <label>Powertrain</label>
@@ -609,7 +645,7 @@ function bindManual(manualId, sliderId, setter){
   const slider = document.getElementById(sliderId);
   if(!manual || !slider) return;
   manual.addEventListener('input', () => {
-    const raw = manual.value;
+    let raw = manual.value.replace(/,/g, '').replace(/[^0-9.]/g, '');
     if(raw === '' || raw === '-' || raw === '.') return;
     const num = Number(raw);
     if(isNaN(num)) return;
@@ -620,9 +656,10 @@ function bindManual(manualId, sliderId, setter){
   });
   manual.addEventListener('change', () => {
     const min = Number(slider.min), max = Number(slider.max);
-    let num = Number(manual.value);
+    let num = Number(manual.value.replace(/,/g, '').replace(/[^0-9.]/g, ''));
     if(isNaN(num)) num = Number(slider.value);
     num = Math.min(max, Math.max(min, num));
+    manual.value = num.toLocaleString();
     setter(num);
   });
 }

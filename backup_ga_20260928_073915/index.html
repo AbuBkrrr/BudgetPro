@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="google-adsense-account" content="ca-pub-2229008759020664">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BudgetPro — Global Financial Calculators</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600" rel="stylesheet">
+    <style>
+        :root {
+            --navy-950: #0a1628;
+            --navy-900: #0e1d34;
+            --navy-850: #11223c;
+            --navy-800: #132846;
+            --navy-700: #1c3358;
+            --gold: #f5a623;
+            --gold-dim: #c8860f;
+            --gold-soft: rgba(245, 166, 35, 0.12);
+            --ink: #edf1f7;
+            --ink-muted: #8a96ac;
+            --ink-faint: #5c6883;
+            --line: rgba(245, 166, 35, 0.16);
+            --line-soft: rgba(255, 255, 255, 0.06);
+            --green: #3ddc97;
+            --red: #ef6a5f;
+            --display: "Space Grotesk", sans-serif;
+            --body: "Inter", sans-serif;
+            --mono: "IBM Plex Mono", monospace;
+        }
+        *{box-sizing:border-box;}
+        html,body{margin:0;padding:0;}
+        body{background:var(--navy-950);color:var(--ink);font-family:var(--body);min-height:100vh;position:relative;-webkit-font-smoothing:antialiased;}
+        body::before{
+            content:"";position:fixed;inset:0;
+            background-image:
+                repeating-linear-gradient(0deg, rgba(245,166,35,.035) 0 1px, transparent 1px 42px),
+                repeating-linear-gradient(90deg, rgba(245,166,35,.035) 0 1px, transparent 1px 42px);
+            pointer-events:none;z-index:0;
+        }
+        body::after{
+            content:"";position:fixed;top:-10%;left:50%;transform:translateX(-50%);
+            width:1400px;height:1000px;
+            background:radial-gradient(circle, rgba(245,166,35,.08) 0%, rgba(245,166,35,.02) 40%, transparent 65%);
+            pointer-events:none;z-index:0;
+        }
+        a{color:var(--gold);}
+        .wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 20px 80px;}
+
+        /* Global Nav */
+        .global-nav{position:sticky;top:0;z-index:100;background:rgba(10,22,40,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+        .gn-inner{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:18px;padding:12px 20px;}
+        .gn-logo{font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:.4px;color:var(--ink);text-decoration:none;flex-shrink:0;white-space:nowrap;}
+        .gn-logo span{color:var(--gold);}
+        .gn-links{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;}
+        .gn-links::-webkit-scrollbar{display:none;}
+        .gn-link{
+            display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;
+            font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink-muted);
+            text-decoration:none;padding:8px 12px;border-radius:8px;transition:.15s;border:1px solid transparent;
+        }
+        .gn-link:hover{color:var(--ink);background:var(--navy-850);}
+        .gn-link.active{color:var(--gold);background:var(--gold-soft);border-color:var(--line);}
+        .gn-emoji{font-size:14px;}
+        @media(max-width:720px){
+            .gn-link .gn-text{display:none;}
+            .gn-link{padding:8px 10px;}
+            .gn-logo{font-size:14px;}
+        }
+
+        /* Hero */
+        .hero{padding:64px 20px 40px;text-align:center;position:relative;z-index:1;}
+        .hero-eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);}
+        .hero h1{font-family:var(--display);font-weight:700;font-size:clamp(28px,5vw,44px);margin:14px 0 12px;color:var(--ink);}
+        .hero h1 span{color:var(--gold);}
+        .hero p{font-family:var(--body);font-size:15px;color:var(--ink-muted);max-width:560px;margin:0 auto;line-height:1.6;}
+        .hero-meta{margin-top:20px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+        .hero-chip{font-family:var(--mono);font-size:11px;color:var(--ink-faint);border:1px solid var(--line);border-radius:20px;padding:6px 14px;}
+
+        /* Card Grid */
+        .grid{display:grid;grid-template-columns:repeat(3, 1fr);gap:20px;margin-top:10px;}
+        .card{
+            display:block;background:var(--navy-900);border:1px solid var(--line-soft);border-radius:16px;
+            padding:28px 24px;text-decoration:none;color:inherit;position:relative;overflow:hidden;
+            transition:transform .18s, border-color .18s, box-shadow .18s;
+        }
+        .card::before{content:"";position:absolute;top:0;left:0;width:100%;height:3px;background:linear-gradient(90deg,var(--gold),transparent 70%);opacity:.6;transition:.18s;}
+        .card:hover{transform:translateY(-4px);border-color:var(--line);box-shadow:0 12px 32px rgba(0,0,0,.35);}
+        .card:hover::before{opacity:1;}
+        .card-icon{font-size:34px;display:block;margin-bottom:16px;}
+        .card-title{font-family:var(--display);font-size:19px;font-weight:600;color:var(--ink);}
+        .card-desc{font-family:var(--body);font-size:13px;color:var(--ink-muted);margin-top:8px;line-height:1.55;}
+        .card-cta{
+            margin-top:20px;display:flex;align-items:center;gap:6px;
+            font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;
+        }
+        .card-cta .arrow{transition:transform .18s;}
+        .card:hover .card-cta .arrow{transform:translateX(4px);}
+        .card-num{position:absolute;top:24px;right:24px;font-family:var(--mono);font-size:11px;color:var(--ink-faint);}
+
+        /* Footer */
+        footer{background:var(--navy-950);border-top:1px solid var(--line-soft);padding:32px 0 20px;margin-top:auto;}
+        .footer-inner{max-width:1180px;margin:0 auto;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;padding:0 20px;}
+        .footer-inner .copy{color:var(--ink-muted);font-size:0.85rem;}
+        .footer-inner .copy a{color:var(--gold);}
+        .footer-links{display:flex;flex-wrap:wrap;gap:8px 24px;}
+        .footer-links a{font-size:0.85rem;color:var(--ink-muted);font-family:var(--mono);text-decoration:none;}
+        .footer-links a:hover{color:var(--gold);}
+
+        .foot-strip{margin-top:56px;padding:24px;background:var(--navy-900);border:1px solid var(--line-soft);border-radius:14px;text-align:center;}
+        .foot-strip .fs-title{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);}
+        .foot-strip p{font-family:var(--body);font-size:13px;color:var(--ink-muted);margin:10px 0 0;line-height:1.6;max-width:640px;margin-left:auto;margin-right:auto;}
+
+        .foot-note{margin-top:32px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--ink-faint);line-height:1.7;}
+
+        @media(max-width:900px){
+            .grid{grid-template-columns:1fr 1fr;}
+        }
+        @media(max-width:560px){
+            .grid{grid-template-columns:1fr;}
+            .hero{padding:44px 16px 30px;}
+        }
+    </style>
+
+<!-- ===== ADSENSE ===== -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2229008759020664" crossorigin="anonymous"></script>
+
+<!-- BudgetPro -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-2229008759020664"
+     data-ad-slot="9906420300"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<!-- Budgetpro manual -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-2229008759020664"
+     data-ad-slot="6768946061"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+<!-- ===== END ADSENSE ===== -->
+</head>
+<body>
+
+    <header class="global-nav">
+        <div class="gn-inner">
+            <a href="index.html" class="gn-logo">BUDGET<span>PRO</span></a>
+            <nav class="gn-links">
+                <a href="mortgage.html" class="gn-link"><span class="gn-emoji">🏠</span><span class="gn-text">Mortgage</span></a>
+                <a href="auto.html" class="gn-link"><span class="gn-emoji">🚗</span><span class="gn-text">Auto</span></a>
+                <a href="construction.html" class="gn-link"><span class="gn-emoji">🏗️</span><span class="gn-text">Construction</span></a>
+                <a href="solar.html" class="gn-link"><span class="gn-emoji">☀️</span><span class="gn-text">Solar</span></a>
+                <a href="business.html" class="gn-link"><span class="gn-emoji">🏢</span><span class="gn-text">Business</span></a>
+                <a href="income.html" class="gn-link"><span class="gn-emoji">💰</span><span class="gn-text">Savings</span></a>
+                <a href="blog.html" class="gn-link"><span class="gn-emoji">📝</span><span class="gn-text">Blog</span></a>
+                <a href="privacy.html" class="gn-link"><span class="gn-emoji">🔒</span><span class="gn-text">Privacy</span></a>
+                <a href="terms.html" class="gn-link"><span class="gn-emoji">📋</span><span class="gn-text">Terms</span></a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="wrap">
+
+        <div class="hero">
+            <div class="hero-eyebrow">Global Financial Calculators</div>
+            <h1>Budget anything, <span>anywhere</span>.</h1>
+            <p>Six lifecycle calculators sharing one live pricing engine across 20 countries — every number is a local-market estimate you can override and it remembers your changes.</p>
+            <div class="hero-meta">
+                <span class="hero-chip">20 countries</span>
+                <span class="hero-chip">6 calculators</span>
+                <span class="hero-chip">100% editable data</span>
+            </div>
+        </div>
+
+        <div class="grid">
+            <a href="mortgage.html" class="card">
+                <span class="card-num">01</span>
+                <span class="card-icon">🏠</span>
+                <div class="card-title">Mortgage</div>
+                <div class="card-desc">Closing costs, move-in budget, and your monthly PITI payment — with a front-end affordability check.</div>
+                <div class="card-cta">Open calculator <span class="arrow">→</span></div>
+            </a>
+
+            <a href="auto.html" class="card">
+                <span class="card-num">02</span>
+                <span class="card-icon">🚗</span>
+                <div class="card-title">Auto</div>
+                <div class="card-desc">Drive-away price, accessories, and total monthly ownership cost — flags it if you're breaking the 10% auto rule.</div>
+                <div class="card-cta">Open calculator <span class="arrow">→</span></div>
+            </a>
+
+            <a href="construction.html" class="card">
+                <span class="card-num">03</span>
+                <span class="card-icon">🏗️</span>
+                <div class="card-title">Construction</div>
+                <div class="card-desc">Full bill of quantities, furnishing, labor and architect fees, plus the monthly utility burn once it's built.</div>
+                <div class="card-cta">Open calculator <span class="arrow">→</span></div>
+            </a>
+
+            <a href="solar.html" class="card">
+                <span class="card-num">04</span>
+                <span class="card-icon">☀️</span>
+                <div class="card-title">Solar</div>
+                <div class="card-desc">Net system cost after incentives, 25-year degradation-adjusted savings, payback period and ROI.</div>
+                <div class="card-cta">Open calculator <span class="arrow">→</span></div>
+            </a>
+
+            <a href="business.html" class="card">
+                <span class="card-num">05</span>
+                <span class="card-icon">🏢</span>
+                <div class="card-title">Business</div>
+                <div class="card-desc">Startup capital needed — registration, fit-out, and a 6-month burn buffer — plus your break-even revenue.</div>
+                <div class="card-cta">Open calculator <span class="arrow">→</span></div>
+            </a>
+
+            <a href="income.html" class="card">
+                <span class="card-num">06</span>
+                <span class="card-icon">💰</span>
+                <div class="card-title">Income &amp; Savings</div>
+                <div class="card-desc">Net income after tax, the 50/30/20 rule, compound growth, and your Financial Independence number.</div>
+                <div class="card-cta">Open calculator <span class="arrow">→</span></div>
+            </a>
+        </div>
+
+        <div class="foot-strip">
+            <div class="fs-title">One Data Engine, Six Tools</div>
+            <p>Every calculator reads from the same <code>countryData.js</code> file — local prices, tax rates, and rules for 20 countries. Override any number in any tool and it's remembered in your browser, per country, everywhere you use it.</p>
+        </div>
+
+        <div class="foot-note">
+            All figures are editable local-market placeholders, not live financial advice — verify with a qualified professional before you commit real money.
+            <br><br>A product of AI Brains Ventures — <a href="http://www.aibrainsventures.is-great.net/" target="_blank" rel="noopener">www.aibrainsventures.is-great.net</a>
+        </div>
+
+    </div>
+
+    <footer>
+        <div class="footer-inner">
+            <div class="copy">
+                &copy; 2026 <a href="index.html">BudgetPro</a> — Financial clarity for everyone.
+            </div>
+            <div class="footer-links">
+                <a href="privacy.html">Privacy</a>
+                <a href="terms.html">Terms</a>
+                <a href="blog.html">Blog</a>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

@@ -325,6 +325,42 @@ body.light-mode .gn-link.active {
   }
   .manual-input:focus{outline:1px solid var(--gold);}
 </style>
+
+<!-- ===== ADSENSE ===== -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2229008759020664" crossorigin="anonymous"></script>
+
+<!-- BudgetPro -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-2229008759020664"
+     data-ad-slot="9906420300"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<!-- Budgetpro manual -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-2229008759020664"
+     data-ad-slot="6768946061"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+<!-- ===== END ADSENSE ===== -->
+
+<!-- ===== GOOGLE ANALYTICS ===== -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XEZBWF9ZVB"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XEZBWF9ZVB');
+</script>
+<!-- ===== END GOOGLE ANALYTICS ===== -->
 </head>
 <body>
 
@@ -373,12 +409,12 @@ body.light-mode .gn-link.active {
           <button data-mode="annual" class="active">Annual</button>
         </div>
         <input type="range" id="salarySlider" min="10000" max="5000000" step="1000" value="75000">
-        <input type="number" class="manual-input" id="salaryManual" min="10000" max="5000000" step="1000" value="75000" aria-label="salary manual entry">
+        <input type="text" inputmode="numeric" class="manual-input" id="salaryManual" min="10000" max="5000000" step="1000" value="75000" aria-label="salary manual entry">
       </div>
       <div class="field" id="stateTaxField">
         <label>State Tax Rate (flat, editable) <span class="val" id="stateTaxVal">5%</span></label>
         <input type="range" id="stateTaxSlider" min="0" max="15" step="0.1" value="5">
-        <input type="number" class="manual-input" id="stateTaxManual" min="0" max="15" step="0.1" value="5" aria-label="stateTax manual entry">
+        <input type="text" inputmode="numeric" class="manual-input" id="stateTaxManual" min="0" max="15" step="0.1" value="5" aria-label="stateTax manual entry">
       </div>
     </div>
   </section>
@@ -452,19 +488,19 @@ body.light-mode .gn-link.active {
       <div class="field">
         <label>Expected Annual Return <span class="val" id="returnRateVal">7%</span></label>
         <input type="range" id="returnRateSlider" min="0" max="15" step="0.1" value="7">
-        <input type="number" class="manual-input" id="returnRateManual" min="0" max="15" step="0.1" value="7" aria-label="returnRate manual entry">
+        <input type="text" inputmode="numeric" class="manual-input" id="returnRateManual" min="0" max="15" step="0.1" value="7" aria-label="returnRate manual entry">
       </div>
       <div class="field">
         <label>Years to Project <span class="val" id="yearsVal">30</span></label>
         <input type="range" id="yearsSlider" min="1" max="50" step="1" value="30">
-        <input type="number" class="manual-input" id="yearsManual" min="1" max="50" step="1" value="30" aria-label="years manual entry">
+        <input type="text" inputmode="numeric" class="manual-input" id="yearsManual" min="1" max="50" step="1" value="30" aria-label="years manual entry">
       </div>
     </div>
     <div class="inputs-grid cols3" style="margin-top:20px;">
       <div class="field">
         <label>Assumed Inflation Rate <span class="val" id="inflationVal">3%</span></label>
         <input type="range" id="inflationSlider" min="0" max="10" step="0.1" value="3">
-        <input type="number" class="manual-input" id="inflationManual" min="0" max="10" step="0.1" value="3" aria-label="inflation manual entry">
+        <input type="text" inputmode="numeric" class="manual-input" id="inflationManual" min="0" max="10" step="0.1" value="3" aria-label="inflation manual entry">
       </div>
     </div>
 
@@ -629,7 +665,7 @@ function bindManual(manualId, sliderId, setter){
   const slider = document.getElementById(sliderId);
   if(!manual || !slider) return;
   manual.addEventListener('input', () => {
-    const raw = manual.value;
+    let raw = manual.value.replace(/,/g, '').replace(/[^0-9.]/g, '');
     if(raw === '' || raw === '-' || raw === '.') return;
     const num = Number(raw);
     if(isNaN(num)) return;
@@ -640,9 +676,10 @@ function bindManual(manualId, sliderId, setter){
   });
   manual.addEventListener('change', () => {
     const min = Number(slider.min), max = Number(slider.max);
-    let num = Number(manual.value);
+    let num = Number(manual.value.replace(/,/g, '').replace(/[^0-9.]/g, ''));
     if(isNaN(num)) num = Number(slider.value);
     num = Math.min(max, Math.max(min, num));
+    manual.value = num.toLocaleString();
     setter(num);
   });
 }

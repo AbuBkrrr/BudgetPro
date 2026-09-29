@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="google-adsense-account" content="ca-pub-2229008759020664">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BudgetPro — SolarPro ROI Estimator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+  --navy-950: #0a1628;
+  --navy-900: #0e1d34;
+  --navy-850: #11223c;
+  --navy-800: #132846;
+  --navy-700: #1c3358;
+  --gold: #f5a623;
+  --gold-dim: #c8860f;
+  --gold-soft: rgba(245, 166, 35, 0.12);
+  --ink: #edf1f7;
+  --ink-muted: #8a96ac;
+  --ink-faint: #5c6883;
+  --line: rgba(245, 166, 35, 0.16);
+  --line-soft: rgba(255, 255, 255, 0.06);
+  --green: #3ddc97;
+  --red: #ef6a5f;
+  --display: "Space Grotesk", sans-serif;
+  --body: "Inter", sans-serif;
+  --mono: "IBM Plex Mono", monospace;
+}
+
+
+body.light-mode .global-nav {
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom-color: var(--line);
+}
+
+body.light-mode .sheet {
+  background: #ffffff;
+}
+
+body.light-mode .grand-card {
+  background: #ffffff;
+  border-color: var(--gold);
+}
+
+body.light-mode .manual-input,
+body.light-mode .num-field,
+body.light-mode .price-input {
+  background: #ffffff;
+  color: #1a1a2e;
+  border-color: var(--line);
+}
+
+body.light-mode .line-row:nth-child(even) {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+body.light-mode .subtotal-bar {
+  background: var(--navy-850);
+}
+
+body.light-mode .stat-card {
+  background: #ffffff;
+}
+
+body.light-mode .chart-card {
+  background: #ffffff;
+}
+
+body.light-mode .recommendations {
+  background: var(--gold-soft);
+}
+
+body.light-mode .topbar {
+  border-bottom-color: var(--line);
+}
+
+body.light-mode select#countrySelect {
+  background: #ffffff;
+  color: #1a1a2e;
+}
+
+body.light-mode .gn-link {
+  color: var(--ink-muted);
+}
+body.light-mode .gn-link:hover {
+  color: var(--ink);
+  background: var(--navy-850);
+}
+body.light-mode .gn-link.active {
+  color: var(--gold);
+  background: var(--gold-soft);
+}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--navy-950);
+    color:var(--ink);
+    font-family:var(--body);
+    min-height:100vh;
+    position:relative;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* radiant sunburst-over-grid backdrop */
+  body::before{
+    content:"";
+    position:fixed;top:-10%;left:50%;transform:translateX(-50%);
+    width:1400px;height:1400px;
+    background:radial-gradient(circle, rgba(245,166,35,.10) 0%, rgba(245,166,35,.03) 35%, transparent 60%);
+    pointer-events:none;z-index:0;
+  }
+  body::after{
+    content:"";
+    position:fixed;inset:0;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(245,166,35,.035) 0 1px, transparent 1px 42px),
+      repeating-linear-gradient(90deg, rgba(245,166,35,.035) 0 1px, transparent 1px 42px);
+    pointer-events:none;
+    z-index:0;
+  }
+  a{color:var(--gold);}
+  .wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 20px 80px;}
+
+  /* ---------- topbar ---------- */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:20px;
+    padding:22px 20px;border-bottom:1px solid var(--line);
+    max-width:1180px;margin:0 auto;position:relative;z-index:1;flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand .mark{
+    font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:.5px;color:var(--ink);
+  }
+  .brand .mark span{color:var(--gold);}
+  .brand .tagline{font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:.08em;text-transform:uppercase;}
+  .country-picker{display:flex;align-items:center;gap:10px;}
+  .country-picker label{font-family:var(--mono);font-size:11px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.06em;}
+  select#countrySelect{
+    background:var(--navy-850);color:var(--ink);border:1px solid var(--line);
+    border-radius:8px;padding:9px 14px;font-family:var(--body);font-size:14px;font-weight:600;
+    min-width:220px;cursor:pointer;
+  }
+  select#countrySelect:focus{outline:2px solid var(--gold);outline-offset:1px;}
+
+  /* ---------- section shell ---------- */
+  .sheet{
+    margin-top:34px;background:var(--navy-900);border:1px solid var(--line-soft);
+    border-radius:14px;padding:26px 26px 22px;position:relative;overflow:hidden;
+  }
+  .sheet::before{
+    content:"";position:absolute;top:0;left:0;width:100%;height:3px;
+    background:linear-gradient(90deg,var(--gold),transparent 70%);
+  }
+  .sheet-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:20px;flex-wrap:wrap;}
+  .sheet-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--gold);text-transform:uppercase;}
+  .sheet-title{font-family:var(--display);font-size:20px;font-weight:600;margin:4px 0 0;color:var(--ink);}
+  .sheet-sub{font-family:var(--body);font-size:13px;color:var(--ink-muted);margin-top:6px;max-width:540px;}
+  .sheet-num{font-family:var(--mono);font-size:11px;color:var(--ink-faint);border:1px solid var(--line);border-radius:20px;padding:5px 12px;white-space:nowrap;}
+
+  /* ---------- inputs panel ---------- */
+  .inputs-grid{display:grid;grid-template-columns:1.2fr 1.2fr 1fr 1fr;gap:24px;}
+  .field{display:flex;flex-direction:column;gap:10px;}
+  .field label{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-muted);display:flex;justify-content:space-between;}
+  .field label .val{color:var(--gold);font-weight:600;}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;
+    background:var(--navy-700);outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;
+    background:var(--gold);border:3px solid var(--navy-950);cursor:pointer;box-shadow:0 0 0 1px var(--gold);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:18px;height:18px;border-radius:50%;background:var(--gold);border:3px solid var(--navy-950);cursor:pointer;
+  }
+  .num-field{
+    background:var(--navy-800);border:1px solid var(--line);border-radius:8px;
+    color:var(--ink);font-family:var(--mono);font-size:14px;padding:10px 12px;width:100%;
+  }
+  .num-field:focus{outline:1px solid var(--gold);}
+  .segmented{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  .segmented button{
+    flex:1 1 auto;min-width:64px;background:transparent;border:none;color:var(--ink-muted);font-family:var(--body);
+    font-size:12.5px;font-weight:600;padding:10px 4px;cursor:pointer;border-right:1px solid var(--line);border-bottom:1px solid var(--line);transition:.15s;white-space:nowrap;
+  }
+  .segmented button:last-child{border-right:none;}
+  .segmented button.active{background:var(--gold);color:var(--navy-950);}
+  .segmented button:hover:not(.active){background:var(--navy-800);color:var(--ink);}
+  .toggle-row{display:flex;align-items:center;gap:12px;height:38px;}
+  .switch{position:relative;width:46px;height:26px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider-pill{position:absolute;inset:0;background:var(--navy-700);border-radius:14px;cursor:pointer;transition:.2s;border:1px solid var(--line);}
+  .slider-pill::before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:var(--ink-muted);border-radius:50%;transition:.2s;}
+  .switch input:checked + .slider-pill{background:var(--gold-soft);border-color:var(--gold);}
+  .switch input:checked + .slider-pill::before{transform:translateX(20px);background:var(--gold);}
+  .toggle-label{font-family:var(--body);font-size:13px;font-weight:600;color:var(--ink);}
+
+  /* ---------- line rows (shared pattern) ---------- */
+  .line-list{display:flex;flex-direction:column;gap:0;border:1px solid var(--line-soft);border-radius:10px;overflow:hidden;}
+  .line-row{
+    display:grid;grid-template-columns:1.6fr .9fr .9fr .9fr;gap:14px;align-items:center;
+    padding:13px 16px;border-bottom:1px solid var(--line-soft);
+  }
+  .line-row:last-child{border-bottom:none;}
+  .line-row:nth-child(even){background:rgba(255,255,255,.015);}
+  .line-row.negative .line-total{color:var(--green);}
+  .line-name{font-family:var(--body);font-weight:600;font-size:13.5px;}
+  .line-note{display:block;font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);font-weight:400;margin-top:3px;}
+  .line-meta{font-family:var(--mono);font-size:12px;color:var(--ink-muted);text-align:right;}
+  .line-total{font-family:var(--mono);font-size:13.5px;color:var(--gold);text-align:right;font-weight:600;}
+  .price-input{
+    width:110px;background:var(--navy-800);border:1px solid var(--line);border-radius:6px;
+    color:var(--gold);font-family:var(--mono);font-size:12.5px;padding:7px 9px;text-align:right;
+  }
+  .price-input::placeholder{color:var(--ink-faint);}
+  .price-input:focus{outline:1px solid var(--gold);}
+  .price-input.overridden{border-color:var(--gold);background:rgba(245,166,35,.08);}
+
+  .subtotal-bar{
+    display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding:14px 18px;
+    background:var(--navy-850);border:1px solid var(--line);border-radius:10px;
+  }
+  .subtotal-bar .label{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-muted);}
+  .subtotal-bar .amount{font-family:var(--display);font-size:19px;font-weight:700;color:var(--gold);}
+
+  .toggle-empty{
+    padding:18px;text-align:center;font-family:var(--mono);font-size:12px;color:var(--ink-faint);
+    border:1px dashed var(--line);border-radius:10px;margin-bottom:12px;
+  }
+  .toggle-block{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 16px;border:1px solid var(--line-soft);border-radius:10px;margin-bottom:10px;background:var(--navy-850);}
+  .toggle-block .tb-label{font-family:var(--body);font-weight:600;font-size:13.5px;}
+  .toggle-block .tb-note{font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-top:3px;}
+
+  /* ---------- ROI stat cards ---------- */
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:22px;}
+  .stat-card{background:var(--navy-850);border:1px solid var(--line);border-radius:12px;padding:18px 20px;}
+  .stat-card .st-label{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-muted);}
+  .stat-card .st-value{font-family:var(--display);font-size:26px;font-weight:700;color:var(--gold);margin-top:8px;}
+  .stat-card .st-note{font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-top:4px;}
+  .stat-card.positive .st-value{color:var(--green);}
+  .stat-card.negative .st-value{color:var(--red);}
+
+  .chart-block{background:var(--navy-850);border:1px solid var(--line-soft);border-radius:12px;padding:18px;margin-top:20px;}
+  .chart-block .cb-title{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-muted);margin-bottom:12px;}
+
+  /* ---------- summary ---------- */
+  .summary-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:start;}
+  .grand-card{
+    background:linear-gradient(160deg,var(--navy-850),var(--navy-900));border:1px solid var(--gold);
+    border-radius:14px;padding:30px;text-align:center;
+  }
+  .grand-card .g-label{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);}
+  .grand-card .g-amount{font-family:var(--display);font-size:44px;font-weight:700;color:var(--ink);margin:10px 0 6px;word-break:break-word;}
+  .grand-card .g-sub{font-family:var(--mono);font-size:12px;color:var(--ink-muted);}
+  .breakdown-legend{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px;text-align:left;}
+  .legend-item{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;color:var(--ink-muted);}
+  .legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+  .legend-item b{color:var(--ink);font-weight:600;margin-left:auto;}
+  .chart-card{background:var(--navy-850);border:1px solid var(--line-soft);border-radius:14px;padding:20px;}
+  .reset-btn{
+    margin-top:18px;width:100%;background:transparent;border:1px solid var(--line);color:var(--ink-muted);
+    font-family:var(--mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;padding:11px;border-radius:8px;cursor:pointer;
+  }
+  .reset-btn:hover{border-color:var(--red);color:var(--red);}
+  .pdf-btn{
+    margin-top:10px;width:100%;background:var(--gold-soft);border:1px solid var(--gold);color:var(--gold);
+    font-family:var(--mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;padding:11px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s;
+  }
+  .pdf-btn:hover{background:var(--gold);color:var(--navy-950);}
+  .pdf-btn:disabled{opacity:.5;cursor:wait;}
+
+  .foot-note{margin-top:40px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--ink-faint);line-height:1.7;}
+
+  @media(max-width:900px){
+    .inputs-grid{grid-template-columns:1fr 1fr;}
+    .summary-grid{grid-template-columns:1fr;}
+    .stat-grid{grid-template-columns:1fr;}
+    .line-row{grid-template-columns:1.3fr 1fr 1fr;}
+    .line-row .col-price{display:none;}
+  }
+  @media(max-width:560px){
+    .inputs-grid{grid-template-columns:1fr;}
+    .sheet{padding:20px 16px;}
+    .grand-card .g-amount{font-size:32px;}
+  }
+
+  /* ===================== GLOBAL STICKY NAV (identical on every page) ===================== */
+  .global-nav{position:sticky;top:0;z-index:100;background:rgba(10,22,40,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+  .gn-inner{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:18px;padding:12px 20px;}
+  .gn-logo{font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:.4px;color:var(--ink);text-decoration:none;flex-shrink:0;white-space:nowrap;}
+  .gn-logo span{color:var(--gold);}
+  .gn-links{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;}
+  .gn-links::-webkit-scrollbar{display:none;}
+  .gn-link{
+    display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;
+    font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink-muted);
+    text-decoration:none;padding:8px 12px;border-radius:8px;transition:.15s;border:1px solid transparent;
+  }
+  .gn-link:hover{color:var(--ink);background:var(--navy-850);}
+  .gn-link.active{color:var(--gold);background:var(--gold-soft);border-color:var(--line);}
+  .gn-emoji{font-size:14px;}
+  @media(max-width:720px){
+    .gn-link .gn-text{display:none;}
+    .gn-link{padding:8px 10px;}
+    .gn-logo{font-size:14px;}
+  }
+
+  .manual-input{
+    margin-top:8px;width:100%;background:var(--navy-800);border:1px solid var(--line);
+    border-radius:6px;color:var(--gold);font-family:var(--mono);font-size:12.5px;
+    padding:7px 9px;text-align:center;
+  }
+  .manual-input:focus{outline:1px solid var(--gold);}
+</style>
+
+<!-- ===== ADSENSE ===== -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2229008759020664" crossorigin="anonymous"></script>
+
+<!-- BudgetPro -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-2229008759020664"
+     data-ad-slot="9906420300"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<!-- Budgetpro manual -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-2229008759020664"
+     data-ad-slot="6768946061"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+<!-- ===== END ADSENSE ===== -->
+</head>
+<body>
+
+<header class="global-nav">
+  <div class="gn-inner">
+    <a href="index.html" class="gn-logo">BUDGET<span>PRO</span></a>
+    <nav class="gn-links">
+      <a href="mortgage.html" class="gn-link"><span class="gn-emoji">🏠</span><span class="gn-text">Mortgage</span></a>
+      <a href="auto.html" class="gn-link"><span class="gn-emoji">🚗</span><span class="gn-text">Auto</span></a>
+      <a href="construction.html" class="gn-link"><span class="gn-emoji">🏗️</span><span class="gn-text">Construction</span></a>
+      <a href="solar.html" class="gn-link active"><span class="gn-emoji">☀️</span><span class="gn-text">Solar</span></a>
+      <a href="business.html" class="gn-link"><span class="gn-emoji">🏢</span><span class="gn-text">Business</span></a>
+      <a href="income.html" class="gn-link"><span class="gn-emoji">💰</span><span class="gn-text">Savings</span></a>
+    </nav>
+  </div>
+</header>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="mark">BUDGET<span>PRO</span></span>
+    <span class="tagline">SolarPro ROI Estimator</span>
+  </div>
+  <div class="country-picker">
+    <label for="countrySelect">Country</label>
+    <select id="countrySelect"></select>
+    
+  </div>
+</header>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- SYSTEM PARAMETERS -->
+  <section class="sheet" id="paramsSheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">System Parameters</div>
+        <div class="sheet-title">Define the array</div>
+      </div>
+      <div class="sheet-num">SHEET 00 / 03</div>
+    </div>
+    <div class="inputs-grid">
+      <div class="field">
+        <label>System Size <span class="val" id="sizeVal">6 kW</span></label>
+        <input type="range" id="sizeSlider" min="1" max="50" step="0.5" value="6">
+        <input type="text" inputmode="numeric" class="manual-input" id="sizeManual" min="1" max="50" step="0.5" value="6" aria-label="size manual entry">
+      </div>
+      <div class="field">
+        <label>Roof Type</label>
+        <div class="segmented" id="roofSeg">
+          <button data-r="flat" data-mult="0.95">Flat</button>
+          <button data-r="pitched" data-mult="1.0" class="active">Pitched</button>
+          <button data-r="tile" data-mult="1.15">Tile/Metal</button>
+          <button data-r="complex" data-mult="1.25">Complex</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Current Monthly Bill</label>
+        <input type="number" class="num-field" id="billInput" value="120" min="0" step="5">
+      </div>
+      <div class="field">
+        <label>Loan Rate (if financing) <span class="val" id="loanRateVal">6.5%</span></label>
+        <input type="range" id="loanRateSlider" min="0" max="20" step="0.1" value="6.5">
+        <input type="text" inputmode="numeric" class="manual-input" id="loanRateManual" min="0" max="20" step="0.1" value="6.5" aria-label="loanRate manual entry">
+      </div>
+      <div class="field">
+        <label>State / Local Incentives</label>
+        <input type="number" class="num-field" id="stateIncentiveInput" value="0" min="0" step="50">
+      </div>
+      <div class="field">
+        <label>Finance This System?</label>
+        <div class="toggle-row">
+          <label class="switch">
+            <input type="checkbox" id="financeToggle">
+            <span class="slider-pill"></span>
+          </label>
+          <span class="toggle-label" id="financeLabel">Cash Purchase</span>
+        </div>
+      </div>
+      <div class="field" id="loanTermField" style="display:none;">
+        <label>Loan Term <span class="val" id="loanTermVal">10 yr</span></label>
+        <input type="range" id="loanTermSlider" min="3" max="25" step="1" value="10">
+        <input type="text" inputmode="numeric" class="manual-input" id="loanTermManual" min="3" max="25" step="1" value="10" aria-label="loanTerm manual entry">
+      </div>
+    </div>
+  </section>
+
+  <!-- PHASE 1 -->
+  <section class="sheet" id="phase1Sheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Phase 01 — Setup</div>
+        <div class="sheet-title">Gross &amp; Net Cost</div>
+        <div class="sheet-sub">Panel and installation rates pull from local market data and scale with roof-type complexity. Incentives reduce the net cost you finance or pay upfront.</div>
+      </div>
+      <div class="sheet-num">SHEET 01 / 03</div>
+    </div>
+    <div class="line-list" id="phase1List"></div>
+    <div class="subtotal-bar">
+      <span class="label">Net Cost (after incentives)</span>
+      <span class="amount" id="netCostBar">—</span>
+    </div>
+  </section>
+
+  <!-- PHASE 2 -->
+  <section class="sheet" id="phase2Sheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Phase 02 — Handover</div>
+        <div class="sheet-title">Battery, Inverter &amp; Accessories</div>
+        <div class="sheet-sub">Optional add-ons layered onto the upfront investment.</div>
+      </div>
+      <div class="sheet-num">SHEET 02 / 03</div>
+    </div>
+    <div class="toggle-block">
+      <div>
+        <div class="tb-label">Battery Storage</div>
+        <div class="tb-note" id="batteryNote">—</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="batteryToggle">
+        <span class="slider-pill"></span>
+      </label>
+    </div>
+    <div class="toggle-block">
+      <div>
+        <div class="tb-label">Inverter</div>
+        <div class="tb-note" id="inverterNote">—</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="inverterToggle" checked>
+        <span class="slider-pill"></span>
+      </label>
+    </div>
+    <div class="toggle-block">
+      <div>
+        <div class="tb-label">Charge Controller</div>
+        <div class="tb-note" id="controllerNote">—</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="controllerToggle">
+        <span class="slider-pill"></span>
+      </label>
+    </div>
+    <div class="toggle-block">
+      <div>
+        <div class="tb-label">Mounting &amp; Wiring Hardware</div>
+        <div class="tb-note" id="mountingNote">—</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="mountingToggle" checked>
+        <span class="slider-pill"></span>
+      </label>
+    </div>
+    <div class="toggle-block">
+      <div>
+        <div class="tb-label">Smart Monitoring System</div>
+        <div class="tb-note" id="monitoringNote">—</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="monitoringToggle">
+        <span class="slider-pill"></span>
+      </label>
+    </div>
+    <div class="line-list" id="phase2List"></div>
+    <div class="subtotal-bar">
+      <span class="label">Total Upfront Investment</span>
+      <span class="amount" id="upfrontTotal">—</span>
+    </div>
+  </section>
+
+  <!-- PHASE 3 -->
+  <section class="sheet" id="phase3Sheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Phase 03 — Burn &amp; Savings</div>
+        <div class="sheet-title">Monthly Cash Flow &amp; 25-Year ROI</div>
+        <div class="sheet-sub">Production degrades 0.5%/yr. An inverter replacement lands in Year 12. Figures below assume today's electricity tariff held flat except for panel degradation.</div>
+      </div>
+      <div class="sheet-num">SHEET 03 / 03</div>
+    </div>
+
+    <div class="inputs-grid cols3">
+      <div class="field">
+        <label>Average Grid Supply <span class="val" id="gridHoursVal">18 hrs/day</span></label>
+        <input type="range" id="gridHoursSlider" min="0" max="24" step="1" value="18">
+        <input type="text" inputmode="numeric" class="manual-input" id="gridHoursManual" min="0" max="24" step="1" value="18" aria-label="grid supply hours manual entry">
+      </div>
+      <div class="field">
+        <label>Include Backup Power Value?</label>
+        <div class="toggle-row">
+          <label class="switch">
+            <input type="checkbox" id="backupValueToggle">
+            <span class="slider-pill"></span>
+          </label>
+          <span class="toggle-label" id="backupValueLabel">Off</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="line-list" id="phase3List"></div>
+    <div class="subtotal-bar">
+      <span class="label">Net Monthly Cash Flow</span>
+      <span class="amount" id="netMonthlyBar">—</span>
+    </div>
+
+    <div class="stat-grid" style="margin-top:22px;">
+      <div class="stat-card positive">
+        <div class="st-label">Payback Period</div>
+        <div class="st-value" id="paybackStat">—</div>
+        <div class="st-note">Net Cost ÷ Annual Savings</div>
+      </div>
+      <div class="stat-card">
+        <div class="st-label">25-Year Gross Savings</div>
+        <div class="st-value" id="grossSavingsStat">—</div>
+        <div class="st-note">before inverter replacement</div>
+      </div>
+      <div class="stat-card" id="roiCard">
+        <div class="st-label">25-Year Net ROI</div>
+        <div class="st-value" id="roiStat">—</div>
+        <div class="st-note" id="roiNote">net savings vs. net cost</div>
+      </div>
+    </div>
+
+    <div class="chart-block">
+      <div class="cb-title">Cumulative Net Savings — 25 Year Projection</div>
+      <canvas id="projectionChart" height="90"></canvas>
+    </div>
+  </section>
+
+  <!-- SUMMARY -->
+  <section class="sheet" id="summarySheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Grand Summary</div>
+        <div class="sheet-title">Total upfront investment</div>
+      </div>
+    </div>
+    <div class="summary-grid">
+      <div class="grand-card">
+        <div class="g-label">Total Net Investment (Phase 1 + Phase 2)</div>
+        <div class="g-amount" id="grandTotal">—</div>
+        <div class="g-sub">Panels + Installation + Battery + Monitoring − Incentives</div>
+        <div class="breakdown-legend" id="legend"></div>
+      </div>
+      <div class="chart-card">
+        <canvas id="breakdownChart" height="260"></canvas>
+        <button class="reset-btn" id="resetBtn">Reset all overrides for this country</button>
+        <button class="pdf-btn" id="pdfBtn">📄 Download PDF Summary</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot-note">
+    All rates and prices are editable local-market placeholders, not live quotes — verify with an installer before budgeting.<br>
+    Your custom rates are saved to this browser automatically and reload with the page.
+  <br><br>A product of AI Brains Ventures — <a href="http://www.aibrainsventures.is-great.net/" target="_blank" rel="noopener">www.aibrainsventures.is-great.net</a></div>
+
+</div>
+
+<script src="countryData.js"></script>
+<script>
+
+/* ---------------- state ---------------- */
+const STORE_KEY = 'budgetpro_solar_v1';
+let store = loadStore();
+let lastSummary = {};
+
+let state = {
+  country: store.settings.country || 'NG',
+  size: store.settings.size ?? 6,
+  roof: store.settings.roof || 'pitched',
+  roofMult: store.settings.roofMult ?? 1.0,
+  bill: store.settings.bill ?? 120,
+  loanRate: store.settings.loanRate ?? 6.5,
+  stateIncentive: store.settings.stateIncentive ?? 0,
+  finance: store.settings.finance ?? false,
+  loanTerm: store.settings.loanTerm ?? 10,
+  battery: store.settings.battery ?? false,
+  monitoring: store.settings.monitoring ?? false,
+  inverter: store.settings.inverter ?? true,
+  chargeController: store.settings.chargeController ?? false,
+  mounting: store.settings.mounting ?? true,
+  gridHours: store.settings.gridHours ?? 18,
+  includeBackupValue: store.settings.includeBackupValue ?? false,
+};
+
+function loadStore(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){ /* ignore corrupt storage */ }
+  return { settings:{}, overrides:{} };
+}
+function saveStore(){
+  localStorage.setItem(STORE_KEY, JSON.stringify(store));
+}
+function getOverride(category, key){
+  const c = store.overrides[state.country];
+  if(!c) return undefined;
+  const v = c[category + '.' + key];
+  return (v === undefined || v === null || v === '') ? undefined : v;
+}
+function setOverride(category, key, value){
+  if(!store.overrides[state.country]) store.overrides[state.country] = {};
+  const k = category + '.' + key;
+  if(value === '' || value === null || value === undefined || isNaN(value)){
+    delete store.overrides[state.country][k];
+  }else{
+    store.overrides[state.country][k] = Number(value);
+  }
+  saveStore();
+}
+
+/* ---------------- helpers ---------------- */
+function cd(){ return countryData[state.country]; }
+function sym(){ return cd().currencySymbol; }
+function fmtMoney(v){
+  const sign = v < 0 ? '-' : '';
+  return sign + sym() + Math.round(Math.abs(v)).toLocaleString(undefined,{maximumFractionDigits:0});
+}
+
+/* Keep a manual-entry number input in sync with its slider/state, unless the
+   user currently has that field focused (so we never fight their typing). */
+function syncManual(id, value){
+  const el = document.getElementById(id);
+  if(el && document.activeElement !== el) el.value = value;
+}
+/* Wire a manual number input to drive the same state as its paired slider. */
+function bindManual(manualId, sliderId, setter){
+  const manual = document.getElementById(manualId);
+  const slider = document.getElementById(sliderId);
+  if(!manual || !slider) return;
+  manual.addEventListener('input', () => {
+    let raw = manual.value.replace(/,/g, '').replace(/[^0-9.]/g, '');
+    if(raw === '' || raw === '-' || raw === '.') return;
+    const num = Number(raw);
+    if(isNaN(num)) return;
+    const min = Number(slider.min), max = Number(slider.max);
+    const clamped = Math.min(max, Math.max(min, num));
+    slider.value = clamped;
+    setter(num);
+  });
+  manual.addEventListener('change', () => {
+    const min = Number(slider.min), max = Number(slider.max);
+    let num = Number(manual.value.replace(/,/g, '').replace(/[^0-9.]/g, ''));
+    if(isNaN(num)) num = Number(slider.value);
+    num = Math.min(max, Math.max(min, num));
+    manual.value = num.toLocaleString();
+    setter(num);
+  });
+}
+
+/* ---------------- populate country dropdown ---------------- */
+function populateCountries(){
+  const sel = document.getElementById('countrySelect');
+  const regions = {};
+  countryList.forEach(c => { (regions[c.region] ||= []).push(c); });
+  sel.innerHTML = '';
+  Object.keys(regions).sort().forEach(region => {
+    const og = document.createElement('optgroup');
+    og.label = region;
+    regions[region].forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.code;
+      opt.textContent = `${c.name} (${c.currencySymbol})`;
+      og.appendChild(opt);
+    });
+    sel.appendChild(og);
+  });
+  sel.value = state.country;
+}
+
+/* ---------------- Phase 1: Gross & Net Cost ---------------- */
+function renderPhase1(){
+  const list = document.getElementById('phase1List');
+  list.innerHTML = '';
+  const s = cd().solar;
+  const watts = state.size * 1000;
+  let netCost = 0;
+
+  function addRow(name, note, qtyLabel, unitPrice, cat, key, amount, negative=false, editable=true){
+    netCost += negative ? -Math.abs(amount) : amount;
+    const row = document.createElement('div');
+    row.className = 'line-row' + (negative ? ' negative' : '');
+    const priceCell = editable ? `
+      <div class="line-meta col-price">
+        <input type="number" class="price-input" data-cat="${cat}" data-key="${key}"
+               placeholder="${unitPrice}"
+               value="${getOverride(cat,key)!==undefined?getOverride(cat,key):''}"
+               step="any">
+      </div>` : `<div class="line-meta col-price">—</div>`;
+    row.innerHTML = `
+      <div><div class="line-name">${name}</div><span class="line-note">${note}</span></div>
+      <div class="line-meta">${qtyLabel}</div>
+      ${priceCell}
+      <div class="line-total">${negative?'−':''}${fmtMoney(Math.abs(amount))}</div>
+    `;
+    list.appendChild(row);
+  }
+
+  // Panel equipment
+  const panelBase = s.panelCostPerWatt, panelOv = getOverride('solar','panelCostPerWatt');
+  const panelPrice = panelOv !== undefined ? panelOv : panelBase;
+  const panelCost = watts * panelPrice;
+  addRow('Panel Equipment', `${watts.toLocaleString()} W × unit rate`, `${watts.toLocaleString()} W`, panelBase, 'solar','panelCostPerWatt', panelCost);
+
+  // Installation (roof-type adjusted)
+  const instBase = s.installationPerWatt, instOv = getOverride('solar','installationPerWatt');
+  const instPrice = instOv !== undefined ? instOv : instBase;
+  const installCost = watts * instPrice * state.roofMult;
+  addRow('Installation', `${watts.toLocaleString()} W × rate × ${state.roofMult.toFixed(2)} roof factor`, `${state.roof}`, instBase, 'solar','installationPerWatt', installCost);
+
+  const grossCost = panelCost + installCost;
+
+  // Federal tax credit
+  const creditBase = s.federalTaxCredit, creditOv = getOverride('solar','federalTaxCredit');
+  const creditRate = creditOv !== undefined ? creditOv/100 : creditBase;
+  const creditAmount = grossCost * creditRate;
+  addRow('Federal Tax Credit', `${(creditRate*100).toFixed(1)}% of gross cost`, `${(creditBase*100).toFixed(1)}% base`, creditBase*100, 'solar','federalTaxCredit', creditAmount, true);
+
+  // State / local incentives (pure user input, not from countryData)
+  addRow('State / Local Incentives', 'flat, user-provided', 'flat', 0, 'solar','_stateIncentive', state.stateIncentive, true, false);
+
+  document.getElementById('netCostBar').textContent = fmtMoney(netCost);
+  return { grossCost, netCost, panelCost, installCost, creditAmount };
+}
+
+/* ---------------- Phase 2: Battery, Inverter & Accessories ---------------- */
+function renderPhase2(){
+  const list = document.getElementById('phase2List');
+  list.innerHTML = '';
+  const s = cd().solar;
+  let addOnTotal = 0;
+
+  document.getElementById('batteryNote').textContent = state.battery
+    ? `Adding ${fmtMoney(getOverride('solar','batteryStorage') ?? s.batteryStorage)} to upfront cost`
+    : 'Off — system will not include battery backup';
+  document.getElementById('inverterNote').textContent = state.inverter
+    ? `Adding ${fmtMoney(getOverride('solar','inverterCost') ?? s.inverterCost)} to upfront cost`
+    : 'Off — assumes you already have an inverter, or it is priced separately';
+  document.getElementById('controllerNote').textContent = state.chargeController
+    ? `Adding ${fmtMoney(getOverride('solar','chargeControllerCost') ?? s.chargeControllerCost)} to upfront cost`
+    : 'Off — typically only needed for off-grid/battery setups';
+  document.getElementById('mountingNote').textContent = state.mounting
+    ? `Adding ${fmtMoney(getOverride('solar','mountingHardwareCost') ?? s.mountingHardwareCost)} to upfront cost`
+    : 'Off — assumes mounting/racking is quoted separately';
+  document.getElementById('monitoringNote').textContent = state.monitoring
+    ? `Adding ${fmtMoney(getOverride('solar','smartMonitoringCost') ?? s.smartMonitoringCost)} to upfront cost`
+    : 'Off — no remote production monitoring';
+
+  function addRow(name, note, unitPrice, cat, key){
+    const override = getOverride(cat, key);
+    const price = override !== undefined ? override : unitPrice;
+    addOnTotal += price;
+    const row = document.createElement('div');
+    row.className = 'line-row';
+    row.innerHTML = `
+      <div><div class="line-name">${name}</div><span class="line-note">${note}</span></div>
+      <div class="line-meta">1 ×</div>
+      <div class="line-meta col-price">
+        <input type="number" class="price-input" data-cat="${cat}" data-key="${key}"
+               placeholder="${unitPrice}"
+               value="${override!==undefined?override:''}">
+      </div>
+      <div class="line-total">${fmtMoney(price)}</div>
+    `;
+    list.appendChild(row);
+  }
+
+  const anySelected = state.battery || state.inverter || state.chargeController || state.mounting || state.monitoring;
+  if(!anySelected){
+    list.innerHTML = `<div class="toggle-empty">No add-ons selected — toggle any of the options above to add them to the upfront cost.</div>`;
+  }else{
+    if(state.battery) addRow('Battery Storage', 'whole-home backup unit', s.batteryStorage, 'solar','batteryStorage');
+    if(state.inverter) addRow('Inverter', 'DC-to-AC power conversion', s.inverterCost, 'solar','inverterCost');
+    if(state.chargeController) addRow('Charge Controller', 'regulates battery charge/discharge', s.chargeControllerCost, 'solar','chargeControllerCost');
+    if(state.mounting) addRow('Mounting & Wiring Hardware', 'racking, conduit, connectors', s.mountingHardwareCost, 'solar','mountingHardwareCost');
+    if(state.monitoring) addRow('Smart Monitoring System', 'app + production dashboard', s.smartMonitoringCost, 'solar','smartMonitoringCost');
+  }
+
+  return addOnTotal;
+}
+
+/* ---------------- Phase 3: Monthly burn/savings + 25yr ROI ---------------- */
+function amortizedPayment(principal, annualRatePct, months){
+  if(principal <= 0) return 0;
+  const r = (annualRatePct/100) / 12;
+  if(r === 0) return principal / months;
+  const factor = Math.pow(1+r, months);
+  return principal * (r*factor) / (factor - 1);
+}
+
+let projectionChart, breakdownChart;
+
+function renderPhase3(netCost){
+  const list = document.getElementById('phase3List');
+  list.innerHTML = '';
+  const u = cd().utilities;
+  const s = cd().solar;
+  let netMonthly = 0;
+
+  function addRow(name, note, qtyLabel, unitPrice, cat, key, amount, negative=false, editable=true){
+    netMonthly += negative ? -Math.abs(amount) : amount;
+    const row = document.createElement('div');
+    row.className = 'line-row' + (negative ? ' negative' : '');
+    const priceCell = editable ? `
+      <div class="line-meta col-price">
+        <input type="number" class="price-input" data-cat="${cat}" data-key="${key}"
+               placeholder="${unitPrice}"
+               value="${getOverride(cat,key)!==undefined?getOverride(cat,key):''}"
+               step="any">
+      </div>` : `<div class="line-meta col-price">—</div>`;
+    row.innerHTML = `
+      <div><div class="line-name">${name}</div><span class="line-note">${note}</span></div>
+      <div class="line-meta">${qtyLabel}</div>
+      ${priceCell}
+      <div class="line-total">${negative?'−':''}${fmtMoney(Math.abs(amount))}</div>
+    `;
+    list.appendChild(row);
+  }
+
+  // Monthly savings, year 1
+  const tariffBase = u.electricityPerKwh, tariffOv = getOverride('utilities','electricityPerKwh');
+  const tariff = tariffOv !== undefined ? tariffOv : tariffBase;
+  const annualKwh = state.size * 1500;
+  const monthlySavingsY1 = (annualKwh / 12) * tariff;
+  addRow('Electricity Savings', `${state.size} kW × 1500 kWh/yr ÷ 12 × tariff`, `${(annualKwh/12).toFixed(0)} kWh`, tariffBase, 'utilities','electricityPerKwh', monthlySavingsY1);
+
+  // Optional Backup Power Value — an explicitly-labeled ESTIMATE of what solar+battery
+  // saves vs. running a generator during grid outage hours. Off by default since it
+  // rests on assumptions (generator efficiency, load covered) rather than hard data.
+  let backupValue = 0;
+  if(state.includeBackupValue){
+    const outageHours = Math.max(0, 24 - state.gridHours);
+    const generatorFuelPrice = (cd().auto && cd().auto.fuelPricePerLiter) || 0;
+    const assumedGeneratorEfficiencyKwhPerLiter = 3; // fixed, documented assumption
+    const generatorCostPerKwh = assumedGeneratorEfficiencyKwhPerLiter > 0 ? generatorFuelPrice / assumedGeneratorEfficiencyKwhPerLiter : 0;
+    const assumedBackupLoadKw = state.size * 0.5; // assume solar+battery covers ~half rated capacity during an outage
+    const monthlyBackupKwh = outageHours * 30 * assumedBackupLoadKw;
+    const costDelta = Math.max(0, generatorCostPerKwh - tariff);
+    backupValue = monthlyBackupKwh * costDelta;
+    addRow('Backup Power Value (estimate)', `${outageHours}h/day outage × ~${assumedBackupLoadKw.toFixed(1)}kW covered vs. generator fuel — assumption-based`, `${monthlyBackupKwh.toFixed(0)} kWh`, 0, 'solar','_backupValue', backupValue, false, false);
+  }
+
+  // Financing payment
+  let loanPayment = 0;
+  if(state.finance){
+    loanPayment = amortizedPayment(netCost, state.loanRate, state.loanTerm*12);
+    addRow('Loan Payment', `${state.loanTerm} yr term × ${state.loanRate}% APR on ${fmtMoney(netCost)}`, `${state.loanTerm} yr`, 0, 'solar','_loan', loanPayment, true, false);
+  }
+
+  document.getElementById('netMonthlyBar').textContent = fmtMoney(netMonthly);
+  const netMonthlyBarEl = document.getElementById('netMonthlyBar');
+  netMonthlyBarEl.style.color = netMonthly >= 0 ? 'var(--green)' : 'var(--red)';
+
+  /* ---------- 25-year projection with degradation + inverter replacement ---------- */
+  const degradation = getOverride('solar','degradationRate') ?? s.degradationRate;
+  const inverterYear = s.inverterReplacementYear;
+  const inverterCostBase = s.inverterCost, inverterOv = getOverride('solar','inverterCost');
+  const inverterCost = inverterOv !== undefined ? inverterOv : inverterCostBase;
+
+  const annualSavingsY1 = monthlySavingsY1 * 12;
+  let cumulative = 0;
+  const projection = [];
+  for(let year=1; year<=25; year++){
+    const factor = Math.pow(1 - degradation, year - 1);
+    let yearSavings = annualSavingsY1 * factor;
+    if(year === inverterYear) yearSavings -= inverterCost;
+    cumulative += yearSavings;
+    projection.push(cumulative);
+  }
+  const grossSavings25 = projection[24] + inverterCost; // add back the one-time deduction to show "gross" before replacement
+  const netSavings25 = projection[24];
+  const roi = netCost > 0 ? ((netSavings25 - netCost) / netCost) * 100 : 0;
+  const paybackYears = annualSavingsY1 > 0 ? netCost / annualSavingsY1 : Infinity;
+
+  document.getElementById('paybackStat').textContent = isFinite(paybackYears) ? `${paybackYears.toFixed(1)} yrs` : '—';
+  document.getElementById('grossSavingsStat').textContent = fmtMoney(grossSavings25);
+  const roiStat = document.getElementById('roiStat');
+  const roiCard = document.getElementById('roiCard');
+  roiStat.textContent = `${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%`;
+  roiCard.classList.remove('positive','negative');
+  roiCard.classList.add(roi >= 0 ? 'positive' : 'negative');
+  document.getElementById('roiNote').textContent = `${fmtMoney(netSavings25)} net over 25 yrs incl. Year ${inverterYear} inverter swap`;
+
+  // projection chart
+  const ctx = document.getElementById('projectionChart');
+  const labels = projection.map((_,i) => `Yr ${i+1}`);
+  const data = { labels, datasets:[{
+    label:'Cumulative Net Savings',
+    data: projection,
+    borderColor:'#f5a623',
+    backgroundColor:'rgba(245,166,35,.12)',
+    fill:true,
+    tension:.25,
+    pointRadius:0,
+    borderWidth:2,
+  }]};
+  if(projectionChart){ projectionChart.data = data; projectionChart.update(); }
+  else{
+    projectionChart = new Chart(ctx, {
+      type:'line',
+      data,
+      options:{
+        plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:(c)=> fmtMoney(c.raw) } } },
+        scales:{
+          x:{ ticks:{ color:'#5c6883', maxTicksLimit:9, font:{family:'IBM Plex Mono',size:10} }, grid:{ color:'rgba(255,255,255,.04)' } },
+          y:{ ticks:{ color:'#5c6883', font:{family:'IBM Plex Mono',size:10}, callback:(v)=>sym()+Math.round(v/1000)+'k' }, grid:{ color:'rgba(255,255,255,.04)' } }
+        }
+      }
+    });
+  }
+
+  return { monthlySavingsY1, loanPayment, netMonthly, netSavings25, roi, paybackYears };
+}
+
+/* ---------------- Summary + cost-breakdown chart ---------------- */
+function renderSummary(p1, addOnTotal){
+  const grand = p1.netCost + addOnTotal;
+  document.getElementById('grandTotal').textContent = fmtMoney(grand);
+
+  const slices = [
+    { label:'Panels',       value: p1.panelCost,   color:'#f5a623' },
+    { label:'Installation', value: p1.installCost, color:'#3ddc97' },
+    { label:'Add-ons',      value: addOnTotal,     color:'#5b8def' },
+    { label:'Incentives',   value: -(p1.creditAmount + state.stateIncentive), color:'#ef6a5f' },
+  ];
+
+  const legend = document.getElementById('legend');
+  legend.innerHTML = slices.map(s => `
+    <div class="legend-item">
+      <span class="legend-dot" style="background:${s.color}"></span>
+      ${s.label} <b>${fmtMoney(s.value)}</b>
+    </div>
+  `).join('');
+
+  // chart only plots positive magnitudes for a readable donut; incentives shown via legend as a credit
+  const chartSlices = slices.filter(s => s.value > 0);
+  const ctx = document.getElementById('breakdownChart');
+  const data = {
+    labels: chartSlices.map(s=>s.label),
+    datasets: [{ data: chartSlices.map(s=>s.value), backgroundColor: chartSlices.map(s=>s.color), borderColor:'#0e1d34', borderWidth:2 }]
+  };
+  if(breakdownChart){ breakdownChart.data = data; breakdownChart.update(); }
+  else{
+    breakdownChart = new Chart(ctx, {
+      type:'doughnut',
+      data,
+      options:{
+        plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:(c)=> `${c.label}: ${fmtMoney(c.raw)}` } } },
+        cutout:'62%'
+      }
+    });
+  }
+}
+
+/* ---------------- master render ---------------- */
+/* ---------------- master render ---------------- */
+function renderAll(){
+  document.getElementById('sizeVal').textContent = `${state.size} kW`;
+  syncManual('sizeManual', state.size);
+  syncManual('loanRateManual', state.loanRate);
+  syncManual('loanTermManual', state.loanTerm);
+  syncManual('gridHoursManual', state.gridHours);
+  document.getElementById('gridHoursVal').textContent = `${state.gridHours} hrs/day`;
+  document.getElementById('backupValueLabel').textContent = state.includeBackupValue ? 'On' : 'Off';
+  document.getElementById('billInput').value = state.bill;
+  document.getElementById('loanRateVal').textContent = `${state.loanRate}%`;
+  document.getElementById('loanTermVal').textContent = `${state.loanTerm} yr`;
+  document.getElementById('financeLabel').textContent = state.finance ? 'Financing' : 'Cash Purchase';
+  document.getElementById('loanTermField').style.display = state.finance ? 'flex' : 'none';
+
+  const p1 = renderPhase1();
+  const addOnTotal = renderPhase2();
+  document.getElementById('upfrontTotal').textContent = fmtMoney(p1.netCost + addOnTotal);
+  const p3 = renderPhase3(p1.netCost + addOnTotal);
+  renderSummary(p1, addOnTotal);
+
+  // ----- Populate lastSummary for PDF -----
+  const s = cd().solar;
+  const u = cd().utilities;
+  const tariff = getOverride('utilities','electricityPerKwh') ?? u.electricityPerKwh;
+  const annualKwh = state.size * 1500;
+  const monthlySavingsY1 = (annualKwh / 12) * tariff;
+
+  // Degradation and inverter replacement
+  const degradation = getOverride('solar','degradationRate') ?? s.degradationRate;
+  const inverterYear = s.inverterReplacementYear;
+  const inverterCost = getOverride('solar','inverterCost') ?? s.inverterCost;
+
+  let cumulative = 0;
+  for(let year=1; year<=25; year++){
+    const factor = Math.pow(1 - degradation, year - 1);
+    let yearSavings = monthlySavingsY1 * 12 * factor;
+    if(year === inverterYear) yearSavings -= inverterCost;
+    cumulative += yearSavings;
+  }
+  const grossSavings25 = cumulative + inverterCost;
+  const netSavings25 = cumulative;
+  const roi = p1.netCost > 0 ? ((netSavings25 - p1.netCost) / p1.netCost) * 100 : 0;
+  const paybackYears = monthlySavingsY1 > 0 ? p1.netCost / (monthlySavingsY1 * 12) : Infinity;
+
+  // Backup power value
+  let backupValue = 0;
+  if(state.includeBackupValue){
+    const outageHours = Math.max(0, 24 - state.gridHours);
+    const generatorFuelPrice = (cd().auto && cd().auto.fuelPricePerLiter) || 0;
+    const assumedGeneratorEfficiencyKwhPerLiter = 3;
+    const generatorCostPerKwh = assumedGeneratorEfficiencyKwhPerLiter > 0 ? generatorFuelPrice / assumedGeneratorEfficiencyKwhPerLiter : 0;
+    const assumedBackupLoadKw = state.size * 0.5;
+    const monthlyBackupKwh = outageHours * 30 * assumedBackupLoadKw;
+    const costDelta = Math.max(0, generatorCostPerKwh - tariff);
+    backupValue = monthlyBackupKwh * costDelta;
+  }
+
+  // Loan payment
+  let loanPayment = 0;
+  if(state.finance){
+    const r = state.loanRate / 100 / 12;
+    const months = state.loanTerm * 12;
+    const netCost = p1.netCost + addOnTotal;
+    if(r === 0) loanPayment = netCost / months;
+    else {
+      const factor = Math.pow(1 + r, months);
+      loanPayment = netCost * (r * factor) / (factor - 1);
+    }
+  }
+
+  lastSummary = {
+    // System parameters
+    size: state.size,
+    roof: state.roof,
+    roofMult: state.roofMult,
+    bill: state.bill,
+    loanRate: state.loanRate,
+    stateIncentive: state.stateIncentive,
+    finance: state.finance,
+    loanTerm: state.loanTerm,
+    gridHours: state.gridHours,
+    includeBackupValue: state.includeBackupValue,
+    // Phase 1
+    panelCost: p1.panelCost,
+    installCost: p1.installCost,
+    creditAmount: p1.creditAmount,
+    netCost: p1.netCost,
+    grossCost: p1.grossCost,
+    // Phase 2
+    addOnTotal: addOnTotal,
+    battery: state.battery,
+    inverter: state.inverter,
+    chargeController: state.chargeController,
+    mounting: state.mounting,
+    monitoring: state.monitoring,
+    // Phase 3
+    monthlySavingsY1: monthlySavingsY1,
+    backupValue: backupValue,
+    loanPayment: loanPayment,
+    netMonthly: p3.netMonthly,
+    grossSavings25: grossSavings25,
+    netSavings25: netSavings25,
+    roi: roi,
+    paybackYears: paybackYears,
+    // Country
+    countryCode: state.country,
+    currencySymbol: cd().currencySymbol,
+    tariff: tariff,
+    degradation: degradation,
+    inverterYear: inverterYear,
+    inverterCost: inverterCost
+  };
+
+  store.settings = {
+    country: state.country, size: state.size, roof: state.roof, roofMult: state.roofMult,
+    bill: state.bill, loanRate: state.loanRate, stateIncentive: state.stateIncentive,
+    finance: state.finance, loanTerm: state.loanTerm, battery: state.battery,
+    monitoring: state.monitoring, inverter: state.inverter, chargeController: state.chargeController,
+    mounting: state.mounting, gridHours: state.gridHours, includeBackupValue: state.includeBackupValue
+  };
+  saveStore();
+}
+
+/* ---------------- events ---------------- */
+document.getElementById('countrySelect').addEventListener('change', e => {
+  state.country = e.target.value;
+  renderAll();
+});
+document.getElementById('sizeSlider').addEventListener('input', e => {
+  state.size = Number(e.target.value);
+  renderAll();
+});
+document.getElementById('roofSeg').addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  state.roof = btn.dataset.r;
+  state.roofMult = Number(btn.dataset.mult);
+  document.querySelectorAll('#roofSeg button').forEach(b=>b.classList.toggle('active', b===btn));
+  renderAll();
+});
+document.getElementById('billInput').addEventListener('input', e => {
+  state.bill = Number(e.target.value) || 0;
+  saveStore();
+});
+document.getElementById('loanRateSlider').addEventListener('input', e => {
+  state.loanRate = Number(e.target.value);
+  renderAll();
+});
+document.getElementById('stateIncentiveInput').addEventListener('input', e => {
+  state.stateIncentive = Number(e.target.value) || 0;
+  renderAll();
+});
+document.getElementById('financeToggle').addEventListener('change', e => {
+  state.finance = e.target.checked;
+  renderAll();
+});
+document.getElementById('loanTermSlider').addEventListener('input', e => {
+  state.loanTerm = Number(e.target.value);
+  renderAll();
+});
+document.getElementById('batteryToggle').addEventListener('change', e => {
+  state.battery = e.target.checked;
+  renderAll();
+});
+document.getElementById('inverterToggle').addEventListener('change', e => {
+  state.inverter = e.target.checked;
+  renderAll();
+});
+document.getElementById('controllerToggle').addEventListener('change', e => {
+  state.chargeController = e.target.checked;
+  renderAll();
+});
+document.getElementById('mountingToggle').addEventListener('change', e => {
+  state.mounting = e.target.checked;
+  renderAll();
+});
+document.getElementById('monitoringToggle').addEventListener('change', e => {
+  state.monitoring = e.target.checked;
+  renderAll();
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+  delete store.overrides[state.country];
+  saveStore();
+  renderAll();
+});
+document.getElementById('gridHoursSlider').addEventListener('input', e => {
+  state.gridHours = Number(e.target.value);
+  renderAll();
+});
+document.getElementById('backupValueToggle').addEventListener('change', e => {
+  state.includeBackupValue = e.target.checked;
+  renderAll();
+});
+
+bindManual('sizeManual', 'sizeSlider', v => { state.size = v; renderAll(); });
+bindManual('loanRateManual', 'loanRateSlider', v => { state.loanRate = v; renderAll(); });
+bindManual('gridHoursManual', 'gridHoursSlider', v => { state.gridHours = Math.round(v); renderAll(); });
+bindManual('loanTermManual', 'loanTermSlider', v => { state.loanTerm = Math.round(v); renderAll(); });
+
+// Delegated listener for all custom-price / custom-rate inputs (rebuilt on every render).
+// We capture the raw typed string + cursor position before renderAll() destroys/recreates
+// the input, and restore that exact string afterward — not the derived number — so a
+// trailing "." or "0" typed mid-number never gets silently stripped.
+document.body.addEventListener('input', e => {
+  if(!e.target.classList.contains('price-input')) return;
+  const cat = e.target.dataset.cat, key = e.target.dataset.key;
+  if(key === '_loan') return; // non-editable display row guard
+  if(key === '_stateIncentive') return; // handled by its own dedicated input
+  const rawTyped = e.target.value;
+  const selStart = e.target.selectionStart, selEnd = e.target.selectionEnd;
+  const isPercentField = (key === 'federalTaxCredit' || key === 'degradationRate');
+  const val = rawTyped === '' ? '' : (isPercentField ? Number(rawTyped)/100 : Number(rawTyped));
+  setOverride(cat, key, val);
+  renderAll();
+  const again = document.querySelector(`.price-input[data-cat="${cat}"][data-key="${key}"]`);
+  if(again){
+    again.value = rawTyped;
+    again.focus();
+    try{ again.setSelectionRange(selStart, selEnd); }catch(_){}
+  }
+});
+
+/* ---------------- init ---------------- */
+/* ---------------- Professional PDF Export ---------------- */
+function generatePDF() {
+  const btn = document.getElementById('pdfBtn');
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 20;
+
+    // ----- Currency Symbol Mapping -----
+    const symbolMap = {
+      'NG': { symbol: '₦', fallback: 'NGN' },
+      'US': { symbol: '$', fallback: 'USD' },
+      'GB': { symbol: '£', fallback: 'GBP' },
+      'IN': { symbol: '₹', fallback: 'INR' },
+      'KE': { symbol: 'KSh', fallback: 'KES' },
+      'ZA': { symbol: 'R', fallback: 'ZAR' },
+      'GH': { symbol: 'GH₵', fallback: 'GHS' },
+      'EG': { symbol: 'E£', fallback: 'EGP' },
+      'DE': { symbol: '€', fallback: 'EUR' },
+      'FR': { symbol: '€', fallback: 'EUR' },
+      'ES': { symbol: '€', fallback: 'EUR' },
+      'IT': { symbol: '€', fallback: 'EUR' },
+      'NL': { symbol: '€', fallback: 'EUR' },
+      'CN': { symbol: '¥', fallback: 'CNY' },
+      'JP': { symbol: '¥', fallback: 'JPY' },
+      'SG': { symbol: 'S$', fallback: 'SGD' },
+      'ID': { symbol: 'Rp', fallback: 'IDR' },
+      'AE': { symbol: 'AED', fallback: 'AED' },
+      'CA': { symbol: 'C$', fallback: 'CAD' },
+      'AU': { symbol: 'A$', fallback: 'AUD' },
+    };
+    
+    const countryCode = state.country || 'US';
+    const currencyInfo = symbolMap[countryCode] || { symbol: '$', fallback: 'USD' };
+
+    // ----- Helper to format money -----
+    function fmtPDF(v) {
+      const clamped = Math.min(Math.max(v || 0, 0), 1000000000000);
+      if (countryCode === 'NG') {
+        return `NGN ${Math.round(clamped).toLocaleString()}`;
+      }
+      return currencyInfo.symbol + Math.round(clamped).toLocaleString();
+    }
+
+    function fmtPct(v) {
+      return (v * 100).toFixed(1) + '%';
+    }
+
+    // ----- Country Name -----
+    const countryMap = {
+      'NG': 'Nigeria', 'US': 'United States', 'GB': 'United Kingdom',
+      'IN': 'India', 'KE': 'Kenya', 'ZA': 'South Africa',
+      'GH': 'Ghana', 'EG': 'Egypt', 'DE': 'Germany',
+      'FR': 'France', 'ES': 'Spain', 'IT': 'Italy',
+      'NL': 'Netherlands', 'CN': 'China', 'JP': 'Japan',
+      'SG': 'Singapore', 'ID': 'Indonesia', 'AE': 'UAE',
+      'CA': 'Canada', 'AU': 'Australia',
+    };
+    const countryName = countryMap[countryCode] || 'Unknown';
+
+    // ----- Get summary data -----
+    const s = lastSummary || {};
+
+    // ----- HEADER -----
+    doc.setFillColor(10, 22, 40);
+    doc.rect(0, 0, pageWidth, 45, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.setTextColor(245, 166, 35);
+    doc.text('BudgetPro', 14, 30);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(255, 255, 255);
+    doc.text('SolarPro ROI Estimate', 14, 40);
+
+    doc.setFontSize(9);
+    doc.setTextColor(140, 150, 180);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}  |  ${countryName} (${countryCode})`, 14, 52);
+    y = 62;
+
+// ----- Theme Toggle (Dark/Light Mode) -----
+function setTheme(theme) {
+  const toggle = document.getElementById('themeToggle');
+  if (theme === 'light') {
+    document.body.classList.add('light-mode');
+    if (toggle) toggle.textContent = '☀️';
+  } else {
+    document.body.classList.remove('light-mode');
+    if (toggle) toggle.textContent = '🌙';
+  }
+  localStorage.setItem('budgetpro_theme', theme);
+}
+
+// Apply saved theme on load
+const savedTheme = localStorage.getItem('budgetpro_theme') || 'dark';
+setTheme(savedTheme);
+
+// Toggle on click
+document.addEventListener('click', function(e) {
+  if (e.target && e.target.id === 'themeToggle') {
+    const current = localStorage.getItem('budgetpro_theme') || 'dark';
+    setTheme(current === 'dark' ? 'light' : 'dark');
+  }
+});
+
+    // ----- SECTION 1: System Parameters -----
+    doc.setDrawColor(245, 166, 35);
+    doc.setLineWidth(0.5);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text('System Parameters', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+
+    doc.text(`System Size: ${s.size || 0} kW`, 14, y); y += 6;
+    doc.text(`Roof Type: ${s.roof || 'pitched'}`, 14, y); y += 6;
+    doc.text(`Current Monthly Bill: ${fmtPDF(s.bill)}`, 14, y); y += 6;
+    doc.text(`Financing: ${s.finance ? s.loanTerm + ' yr @ ' + s.loanRate + '% APR' : 'Cash Purchase'}`, 14, y); y += 6;
+    doc.text(`Grid Supply Hours: ${s.gridHours || 0} hrs/day`, 14, y); y += 10;
+
+    // ----- SECTION 2: Cost Breakdown -----
+    doc.setDrawColor(245, 166, 35);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Cost Breakdown', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+
+    doc.text(`Gross Cost (Panels + Installation): ${fmtPDF(s.grossCost)}`, 14, y); y += 6;
+    doc.text(`  └─ Panels: ${fmtPDF(s.panelCost)}`, 20, y); y += 5;
+    doc.text(`  └─ Installation: ${fmtPDF(s.installCost)}`, 20, y); y += 6;
+    doc.text(`Federal Tax Credit: ${fmtPDF(s.creditAmount)}`, 14, y); y += 6;
+    doc.text(`State / Local Incentives: ${fmtPDF(s.stateIncentive)}`, 14, y); y += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(245, 166, 35);
+    doc.text(`Net Cost (After Incentives): ${fmtPDF(s.netCost)}`, 14, y); y += 10;
+
+    // ----- SECTION 3: Add-Ons (Phase 2) -----
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Add-Ons (Phase 2)', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+
+    const addOns = [];
+    if (s.battery) addOns.push('Battery Storage');
+    if (s.inverter) addOns.push('Inverter');
+    if (s.chargeController) addOns.push('Charge Controller');
+    if (s.mounting) addOns.push('Mounting Hardware');
+    if (s.monitoring) addOns.push('Smart Monitoring');
+    const addOnText = addOns.length > 0 ? addOns.join(', ') : 'None selected';
+    doc.text(`Selected Add-Ons: ${addOnText}`, 14, y); y += 5;
+    doc.text(`Add-On Subtotal: ${fmtPDF(s.addOnTotal)}`, 14, y); y += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(245, 166, 35);
+    doc.text(`Total Upfront Investment: ${fmtPDF(s.netCost + s.addOnTotal)}`, 14, y); y += 10;
+
+    // ----- SECTION 4: ROI & Savings (Phase 3) -----
+    doc.setDrawColor(245, 166, 35);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text('ROI & Savings (25-Year Projection)', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+
+    doc.text(`Monthly Savings (Year 1): ${fmtPDF(s.monthlySavingsY1)}`, 14, y); y += 6;
+    doc.text(`Annual Savings (Year 1): ${fmtPDF(s.monthlySavingsY1 * 12)}`, 14, y); y += 6;
+    if (s.backupValue > 0) {
+      doc.text(`Backup Power Value (estimate): ${fmtPDF(s.backupValue)}/mo`, 14, y); y += 6;
+    }
+    if (s.finance && s.loanPayment > 0) {
+      doc.text(`Loan Payment: ${fmtPDF(s.loanPayment)}/mo`, 14, y); y += 6;
+    }
+    doc.text(`Net Monthly Cash Flow: ${fmtPDF(s.netMonthly)}`, 14, y); y += 8;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(61, 220, 151);
+    doc.text(`Payback Period: ${isFinite(s.paybackYears) ? s.paybackYears.toFixed(1) + ' years' : '—'}`, 14, y); y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+    doc.text(`25-Year Gross Savings: ${fmtPDF(s.grossSavings25)}`, 14, y); y += 6;
+    doc.text(`25-Year Net Savings: ${fmtPDF(s.netSavings25)}`, 14, y); y += 6;
+    doc.text(`25-Year Net ROI: ${s.roi >= 0 ? '+' : ''}${s.roi.toFixed(1)}%`, 14, y); y += 10;
+
+    // ----- SECTION 5: Key Assumptions -----
+    doc.setDrawColor(245, 166, 35);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Key Assumptions', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 80);
+
+    doc.text(`• Panel Degradation: ${fmtPct(s.degradation || 0.005)}/year`, 14, y); y += 5;
+    doc.text(`• Inverter Replacement: Year ${s.inverterYear || 12} (${fmtPDF(s.inverterCost)})`, 14, y); y += 5;
+    doc.text(`• Electricity Tariff: ${fmtPDF(s.tariff)}/kWh (held flat)`, 14, y); y += 5;
+    doc.text(`• Annual Production: ${(s.size || 0) * 1500} kWh/year`, 14, y); y += 10;
+
+    // ----- SECTION 6: Recommendations -----
+    doc.setDrawColor(245, 166, 35);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Smart Recommendations', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 80);
+
+    const recItems = document.querySelectorAll('#recList li');
+    if (recItems && recItems.length > 0) {
+      recItems.forEach((li) => {
+        const text = li.textContent || 'Adjust the sliders to see personalized recommendations.';
+        const lines = doc.splitTextToSize(text, pageWidth - 28);
+        doc.text(lines, 14, y);
+        y += lines.length * 5 + 3;
+        if (y > 260) {
+          doc.addPage();
+          y = 20;
+        }
+      });
+    } else {
+      doc.text('Adjust the sliders to see personalized recommendations.', 14, y);
+      y += 6;
+    }
+
+    // ----- FOOTER -----
+    doc.setFontSize(8);
+    doc.setTextColor(140, 140, 140);
+    doc.text('All figures are editable local-market placeholders, not installer quotes.', 14, 280);
+
+    doc.save(`BudgetPro-Solar-${countryCode}.pdf`);
+  } catch (err) {
+    console.error('PDF Error:', err);
+    alert('PDF generation failed: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📄 Download PDF Summary';
+  }
+}
+document.getElementById('pdfBtn').addEventListener('click', generatePDF);
+
+function init(){
+  populateCountries();
+  document.getElementById('sizeSlider').value = state.size;
+  document.getElementById('billInput').value = state.bill;
+  document.getElementById('loanRateSlider').value = state.loanRate;
+  document.getElementById('stateIncentiveInput').value = state.stateIncentive;
+  document.getElementById('financeToggle').checked = state.finance;
+  document.getElementById('loanTermSlider').value = state.loanTerm;
+  document.getElementById('batteryToggle').checked = state.battery;
+  document.getElementById('inverterToggle').checked = state.inverter;
+  document.getElementById('controllerToggle').checked = state.chargeController;
+  document.getElementById('mountingToggle').checked = state.mounting;
+  document.getElementById('monitoringToggle').checked = state.monitoring;
+  document.getElementById('gridHoursSlider').value = state.gridHours;
+  document.getElementById('backupValueToggle').checked = state.includeBackupValue;
+  document.querySelectorAll('#roofSeg button').forEach(b=>b.classList.toggle('active', b.dataset.r===state.roof));
+  renderAll();
+}
+init();
+</script>
+</body>
+</html>
+

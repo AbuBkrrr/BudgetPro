@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="google-adsense-account" content="ca-pub-2229008759020664">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BudgetPro — BusinessPro Runway Estimator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+  --navy-950: #0a1628;
+  --navy-900: #0e1d34;
+  --navy-850: #11223c;
+  --navy-800: #132846;
+  --navy-700: #1c3358;
+  --gold: #f5a623;
+  --gold-dim: #c8860f;
+  --gold-soft: rgba(245, 166, 35, 0.12);
+  --ink: #edf1f7;
+  --ink-muted: #8a96ac;
+  --ink-faint: #5c6883;
+  --line: rgba(245, 166, 35, 0.16);
+  --line-soft: rgba(255, 255, 255, 0.06);
+  --green: #3ddc97;
+  --red: #ef6a5f;
+  --display: "Space Grotesk", sans-serif;
+  --body: "Inter", sans-serif;
+  --mono: "IBM Plex Mono", monospace;
+}
+
+
+body.light-mode .global-nav {
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom-color: var(--line);
+}
+
+body.light-mode .sheet {
+  background: #ffffff;
+}
+
+body.light-mode .grand-card {
+  background: #ffffff;
+  border-color: var(--gold);
+}
+
+body.light-mode .manual-input,
+body.light-mode .num-field,
+body.light-mode .price-input {
+  background: #ffffff;
+  color: #1a1a2e;
+  border-color: var(--line);
+}
+
+body.light-mode .line-row:nth-child(even) {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+body.light-mode .subtotal-bar {
+  background: var(--navy-850);
+}
+
+body.light-mode .stat-card {
+  background: #ffffff;
+}
+
+body.light-mode .chart-card {
+  background: #ffffff;
+}
+
+body.light-mode .recommendations {
+  background: var(--gold-soft);
+}
+
+body.light-mode .topbar {
+  border-bottom-color: var(--line);
+}
+
+body.light-mode select#countrySelect {
+  background: #ffffff;
+  color: #1a1a2e;
+}
+
+body.light-mode .gn-link {
+  color: var(--ink-muted);
+}
+body.light-mode .gn-link:hover {
+  color: var(--ink);
+  background: var(--navy-850);
+}
+body.light-mode .gn-link.active {
+  color: var(--gold);
+  background: var(--gold-soft);
+}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--navy-950);
+    color:var(--ink);
+    font-family:var(--body);
+    min-height:100vh;
+    position:relative;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* ledger-column backdrop */
+  body::before{
+    content:"";
+    position:fixed;inset:0;
+    background-image:
+      repeating-linear-gradient(90deg, rgba(245,166,35,.05) 0 1px, transparent 1px 120px),
+      repeating-linear-gradient(0deg, rgba(245,166,35,.035) 0 1px, transparent 1px 32px);
+    pointer-events:none;
+    z-index:0;
+    mask-image:linear-gradient(180deg, rgba(0,0,0,.6), rgba(0,0,0,.6) 85%, transparent);
+  }
+  a{color:var(--gold);}
+  .wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 20px 80px;}
+
+  /* ---------- topbar ---------- */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:20px;
+    padding:22px 20px;border-bottom:1px solid var(--line);
+    max-width:1180px;margin:0 auto;position:relative;z-index:1;flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand .mark{
+    font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:.5px;color:var(--ink);
+  }
+  .brand .mark span{color:var(--gold);}
+  .brand .tagline{font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:.08em;text-transform:uppercase;}
+  .country-picker{display:flex;align-items:center;gap:10px;}
+  .country-picker label{font-family:var(--mono);font-size:11px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.06em;}
+  select#countrySelect{
+    background:var(--navy-850);color:var(--ink);border:1px solid var(--line);
+    border-radius:8px;padding:9px 14px;font-family:var(--body);font-size:14px;font-weight:600;
+    min-width:220px;cursor:pointer;
+  }
+  select#countrySelect:focus{outline:2px solid var(--gold);outline-offset:1px;}
+
+  /* ---------- section shell ---------- */
+  .sheet{
+    margin-top:34px;background:var(--navy-900);border:1px solid var(--line-soft);
+    border-radius:14px;padding:26px 26px 22px;position:relative;overflow:hidden;
+  }
+  .sheet::before{
+    content:"";position:absolute;top:0;left:0;width:100%;height:3px;
+    background:linear-gradient(90deg,var(--gold),transparent 70%);
+  }
+  .sheet-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:20px;flex-wrap:wrap;}
+  .sheet-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--gold);text-transform:uppercase;}
+  .sheet-title{font-family:var(--display);font-size:20px;font-weight:600;margin:4px 0 0;color:var(--ink);}
+  .sheet-sub{font-family:var(--body);font-size:13px;color:var(--ink-muted);margin-top:6px;max-width:540px;}
+  .sheet-num{font-family:var(--mono);font-size:11px;color:var(--ink-faint);border:1px solid var(--line);border-radius:20px;padding:5px 12px;white-space:nowrap;}
+
+  /* ---------- inputs panel ---------- */
+  .inputs-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1.2fr;gap:24px;}
+  .field{display:flex;flex-direction:column;gap:10px;}
+  .field label{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-muted);display:flex;justify-content:space-between;}
+  .field label .val{color:var(--gold);font-weight:600;}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;
+    background:var(--navy-700);outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;
+    background:var(--gold);border:3px solid var(--navy-950);cursor:pointer;box-shadow:0 0 0 1px var(--gold);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:18px;height:18px;border-radius:50%;background:var(--gold);border:3px solid var(--navy-950);cursor:pointer;
+  }
+  .num-field{
+    background:var(--navy-800);border:1px solid var(--line);border-radius:8px;
+    color:var(--ink);font-family:var(--mono);font-size:14px;padding:10px 12px;width:100%;
+  }
+  .num-field:focus{outline:1px solid var(--gold);}
+  .segmented{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  .segmented button{
+    flex:1 1 auto;min-width:64px;background:transparent;border:none;color:var(--ink-muted);font-family:var(--body);
+    font-size:13px;font-weight:600;padding:10px 6px;cursor:pointer;border-right:1px solid var(--line);border-bottom:1px solid var(--line);transition:.15s;white-space:nowrap;
+  }
+  .segmented button:last-child{border-right:none;}
+  .segmented button.active{background:var(--gold);color:var(--navy-950);}
+  .segmented button:hover:not(.active){background:var(--navy-800);color:var(--ink);}
+
+  /* ---------- line rows (shared pattern) ---------- */
+  .line-list{display:flex;flex-direction:column;gap:0;border:1px solid var(--line-soft);border-radius:10px;overflow:hidden;}
+  .line-row{
+    display:grid;grid-template-columns:1.6fr .9fr .9fr .9fr;gap:14px;align-items:center;
+    padding:13px 16px;border-bottom:1px solid var(--line-soft);
+  }
+  .line-row:last-child{border-bottom:none;}
+  .line-row:nth-child(even){background:rgba(255,255,255,.015);}
+  .line-name{font-family:var(--body);font-weight:600;font-size:13.5px;}
+  .line-note{display:block;font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);font-weight:400;margin-top:3px;}
+  .line-meta{font-family:var(--mono);font-size:12px;color:var(--ink-muted);text-align:right;}
+  .line-total{font-family:var(--mono);font-size:13.5px;color:var(--gold);text-align:right;font-weight:600;}
+  .price-input{
+    width:110px;background:var(--navy-800);border:1px solid var(--line);border-radius:6px;
+    color:var(--gold);font-family:var(--mono);font-size:12.5px;padding:7px 9px;text-align:right;
+  }
+  .price-input::placeholder{color:var(--ink-faint);}
+  .price-input:focus{outline:1px solid var(--gold);}
+  .price-input.overridden{border-color:var(--gold);background:rgba(245,166,35,.08);}
+
+  .subtotal-bar{
+    display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding:14px 18px;
+    background:var(--navy-850);border:1px solid var(--line);border-radius:10px;
+  }
+  .subtotal-bar .label{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-muted);}
+  .subtotal-bar .amount{font-family:var(--display);font-size:19px;font-weight:700;color:var(--gold);}
+
+  /* ---------- break-even card ---------- */
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px;}
+  .stat-card{background:var(--navy-850);border:1px solid var(--line);border-radius:12px;padding:18px 20px;}
+  .stat-card .st-label{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-muted);}
+  .stat-card .st-value{font-family:var(--display);font-size:24px;font-weight:700;color:var(--gold);margin-top:8px;}
+  .stat-card .st-note{font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-top:4px;}
+  .stat-card.positive .st-value{color:var(--green);}
+  .stat-card.negative .st-value{color:var(--red);}
+
+  /* ---------- summary ---------- */
+  .summary-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:start;}
+  .grand-card{
+    background:linear-gradient(160deg,var(--navy-850),var(--navy-900));border:1px solid var(--gold);
+    border-radius:14px;padding:30px;text-align:center;
+  }
+  .grand-card .g-label{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);}
+  .grand-card .g-amount{font-family:var(--display);font-size:44px;font-weight:700;color:var(--ink);margin:10px 0 6px;word-break:break-word;}
+  .grand-card .g-sub{font-family:var(--mono);font-size:12px;color:var(--ink-muted);}
+  .breakdown-legend{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px;text-align:left;}
+  .legend-item{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;color:var(--ink-muted);}
+  .legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+  .legend-item b{color:var(--ink);font-weight:600;margin-left:auto;}
+  .chart-card{background:var(--navy-850);border:1px solid var(--line-soft);border-radius:14px;padding:20px;}
+  .reset-btn{
+    margin-top:18px;width:100%;background:transparent;border:1px solid var(--line);color:var(--ink-muted);
+    font-family:var(--mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;padding:11px;border-radius:8px;cursor:pointer;
+  }
+  .reset-btn:hover{border-color:var(--red);color:var(--red);}
+  .pdf-btn{
+    margin-top:10px;width:100%;background:var(--gold-soft);border:1px solid var(--gold);color:var(--gold);
+    font-family:var(--mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;padding:11px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s;
+  }
+  .pdf-btn:hover{background:var(--gold);color:var(--navy-950);}
+  .pdf-btn:disabled{opacity:.5;cursor:wait;}
+
+  .foot-note{margin-top:40px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--ink-faint);line-height:1.7;}
+
+  @media(max-width:900px){
+    .inputs-grid{grid-template-columns:1fr 1fr;}
+    .summary-grid{grid-template-columns:1fr;}
+    .stat-grid{grid-template-columns:1fr;}
+    .line-row{grid-template-columns:1.3fr 1fr 1fr;}
+    .line-row .col-price{display:none;}
+  }
+  @media(max-width:560px){
+    .inputs-grid{grid-template-columns:1fr;}
+    .sheet{padding:20px 16px;}
+    .grand-card .g-amount{font-size:32px;}
+  }
+
+  /* ===================== GLOBAL STICKY NAV (identical on every page) ===================== */
+  .global-nav{position:sticky;top:0;z-index:100;background:rgba(10,22,40,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+  .gn-inner{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:18px;padding:12px 20px;}
+  .gn-logo{font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:.4px;color:var(--ink);text-decoration:none;flex-shrink:0;white-space:nowrap;}
+  .gn-logo span{color:var(--gold);}
+  .gn-links{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;}
+  .gn-links::-webkit-scrollbar{display:none;}
+  .gn-link{
+    display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;
+    font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink-muted);
+    text-decoration:none;padding:8px 12px;border-radius:8px;transition:.15s;border:1px solid transparent;
+  }
+  .gn-link:hover{color:var(--ink);background:var(--navy-850);}
+  .gn-link.active{color:var(--gold);background:var(--gold-soft);border-color:var(--line);}
+  .gn-emoji{font-size:14px;}
+  @media(max-width:720px){
+    .gn-link .gn-text{display:none;}
+    .gn-link{padding:8px 10px;}
+    .gn-logo{font-size:14px;}
+  }
+
+  .manual-input{
+    margin-top:8px;width:100%;background:var(--navy-800);border:1px solid var(--line);
+    border-radius:6px;color:var(--gold);font-family:var(--mono);font-size:12.5px;
+    padding:7px 9px;text-align:center;
+  }
+  .manual-input:focus{outline:1px solid var(--gold);}
+</style>
+
+<!-- ===== ADSENSE ===== -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2229008759020664" crossorigin="anonymous"></script>
+
+<!-- BudgetPro -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-2229008759020664"
+     data-ad-slot="9906420300"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<!-- Budgetpro manual -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-2229008759020664"
+     data-ad-slot="6768946061"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+<!-- ===== END ADSENSE ===== -->
+</head>
+<body>
+
+<header class="global-nav">
+  <div class="gn-inner">
+    <a href="index.html" class="gn-logo">BUDGET<span>PRO</span></a>
+    <nav class="gn-links">
+      <a href="mortgage.html" class="gn-link"><span class="gn-emoji">🏠</span><span class="gn-text">Mortgage</span></a>
+      <a href="auto.html" class="gn-link"><span class="gn-emoji">🚗</span><span class="gn-text">Auto</span></a>
+      <a href="construction.html" class="gn-link"><span class="gn-emoji">🏗️</span><span class="gn-text">Construction</span></a>
+      <a href="solar.html" class="gn-link"><span class="gn-emoji">☀️</span><span class="gn-text">Solar</span></a>
+      <a href="business.html" class="gn-link active"><span class="gn-emoji">🏢</span><span class="gn-text">Business</span></a>
+      <a href="income.html" class="gn-link"><span class="gn-emoji">💰</span><span class="gn-text">Savings</span></a>
+    </nav>
+  </div>
+</header>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="mark">BUDGET<span>PRO</span></span>
+    <span class="tagline">BusinessPro Runway Estimator</span>
+  </div>
+  <div class="country-picker">
+    <label for="countrySelect">Country</label>
+    <select id="countrySelect"></select>
+    
+  </div>
+</header>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- BUSINESS PARAMETERS -->
+  <section class="sheet" id="paramsSheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Business Parameters</div>
+        <div class="sheet-title">Define the venture</div>
+      </div>
+      <div class="sheet-num">SHEET 00 / 03</div>
+    </div>
+    <div class="inputs-grid">
+      <div class="field">
+        <label>Structure</label>
+        <div class="segmented" id="structureSeg">
+          <button data-s="llc" class="active">LLC</button>
+          <button data-s="scorp">S-Corp</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Employees <span class="val" id="employeesVal">3</span></label>
+        <input type="range" id="employeesSlider" min="0" max="100" step="1" value="3">
+        <input type="text" inputmode="numeric" class="manual-input" id="employeesManual" min="0" max="100" step="1" value="3" aria-label="employees manual entry">
+      </div>
+      <div class="field">
+        <label>Office Sq Ft <span class="val" id="sqftVal">800</span></label>
+        <input type="range" id="sqftSlider" min="0" max="10000" step="50" value="800">
+        <input type="text" inputmode="numeric" class="manual-input" id="sqftManual" min="0" max="10000" step="50" value="800" aria-label="sqft manual entry">
+      </div>
+      <div class="field">
+        <label>Monthly Revenue Estimate</label>
+        <input type="number" class="num-field" id="revenueInput" value="15000" min="0" step="500">
+      </div>
+    </div>
+  </section>
+
+  <!-- PHASE 1 -->
+  <section class="sheet" id="phase1Sheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Phase 01 — Setup</div>
+        <div class="sheet-title">Registration &amp; Legal</div>
+        <div class="sheet-sub">Suggested fees pull from local market data. Override any of them to match your actual filings.</div>
+      </div>
+      <div class="sheet-num">SHEET 01 / 03</div>
+    </div>
+    <div class="line-list" id="phase1List"></div>
+    <div class="subtotal-bar">
+      <span class="label">Phase 01 Subtotal</span>
+      <span class="amount" id="phase1Subtotal">—</span>
+    </div>
+  </section>
+
+  <!-- PHASE 2 -->
+  <section class="sheet" id="phase2Sheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Phase 02 — Handover</div>
+        <div class="sheet-title">Setup &amp; Fit-Out</div>
+        <div class="sheet-sub">Furniture, opening inventory and the deposit needed to secure your lease.</div>
+      </div>
+      <div class="sheet-num">SHEET 02 / 03</div>
+    </div>
+    <div class="line-list" id="phase2List"></div>
+    <div class="subtotal-bar">
+      <span class="label">Phase 02 Subtotal</span>
+      <span class="amount" id="phase2Subtotal">—</span>
+    </div>
+  </section>
+
+  <!-- PHASE 3 -->
+  <section class="sheet" id="phase3Sheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Phase 03 — Recurring</div>
+        <div class="sheet-title">Monthly Burn</div>
+        <div class="sheet-sub">Ongoing operating costs once the doors are open — rent, payroll, utilities, software, and corporate tax.</div>
+      </div>
+      <div class="sheet-num">SHEET 03 / 03</div>
+    </div>
+    <div class="line-list" id="phase3List"></div>
+    <div class="subtotal-bar">
+      <span class="label">Total Monthly Burn</span>
+      <span class="amount" id="monthlyBurnBar">—</span>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="st-label">Monthly Break-Even Revenue</div>
+        <div class="st-value" id="breakEvenStat">—</div>
+        <div class="st-note">revenue needed to cover Phase 03 costs</div>
+      </div>
+      <div class="stat-card" id="marginCard">
+        <div class="st-label">Est. Revenue vs. Break-Even</div>
+        <div class="st-value" id="marginStat">—</div>
+        <div class="st-note" id="marginNote">based on your monthly revenue estimate</div>
+      </div>
+      <div class="stat-card">
+        <div class="st-label">Runway Covered</div>
+        <div class="st-value" id="runwayStat">—</div>
+        <div class="st-note">6 months of burn reserved in startup capital</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SUMMARY -->
+  <section class="sheet" id="summarySheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Grand Summary</div>
+        <div class="sheet-title">Total startup capital needed</div>
+      </div>
+    </div>
+    <div class="summary-grid">
+      <div class="grand-card">
+        <div class="g-label">Phase 01 + Phase 02 + (Phase 03 × 6 months)</div>
+        <div class="g-amount" id="grandTotal">—</div>
+        <div class="g-sub">Covers setup, fit-out, and a 6-month operating buffer</div>
+        <div class="breakdown-legend" id="legend"></div>
+      </div>
+      <div class="chart-card">
+        <canvas id="breakdownChart" height="260"></canvas>
+        <button class="reset-btn" id="resetBtn">Reset all overrides for this country</button>
+        <button class="pdf-btn" id="pdfBtn">📄 Download PDF Summary</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot-note">
+    All fees and rates are editable local-market placeholders, not live filings — verify with a local accountant or attorney before budgeting.<br>
+    Your custom rates are saved to this browser automatically and reload with the page.
+  <br><br>A product of AI Brains Ventures — <a href="http://www.aibrainsventures.is-great.net/" target="_blank" rel="noopener">www.aibrainsventures.is-great.net</a></div>
+
+</div>
+
+<script src="countryData.js"></script>
+<script>
+
+/* ---------------- state ---------------- */
+const STORE_KEY = 'budgetpro_business_v1';
+let store = loadStore();
+let lastSummary = {};
+
+let state = {
+  country: store.settings.country || 'NG',
+  structure: store.settings.structure || 'llc',
+  employees: store.settings.employees ?? 3,
+  sqft: store.settings.sqft ?? 800,
+  revenue: store.settings.revenue ?? 15000,
+};
+
+function loadStore(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){ /* ignore corrupt storage */ }
+  return { settings:{}, overrides:{} };
+}
+function saveStore(){
+  localStorage.setItem(STORE_KEY, JSON.stringify(store));
+}
+function getOverride(category, key){
+  const c = store.overrides[state.country];
+  if(!c) return undefined;
+  const v = c[category + '.' + key];
+  return (v === undefined || v === null || v === '') ? undefined : v;
+}
+function setOverride(category, key, value){
+  if(!store.overrides[state.country]) store.overrides[state.country] = {};
+  const k = category + '.' + key;
+  if(value === '' || value === null || value === undefined || isNaN(value)){
+    delete store.overrides[state.country][k];
+  }else{
+    store.overrides[state.country][k] = Number(value);
+  }
+  saveStore();
+}
+
+/* ---------------- helpers ---------------- */
+function cd(){ return countryData[state.country]; }
+function sym(){ return cd().currencySymbol; }
+function fmtMoney(v){
+  const sign = v < 0 ? '-' : '';
+  return sign + sym() + Math.round(Math.abs(v)).toLocaleString(undefined,{maximumFractionDigits:0});
+}
+
+/* Keep a manual-entry number input in sync with its slider/state, unless the
+   user currently has that field focused (so we never fight their typing). */
+function syncManual(id, value){
+  const el = document.getElementById(id);
+  if(el && document.activeElement !== el) el.value = value;
+}
+/* Wire a manual number input to drive the same state as its paired slider. */
+function bindManual(manualId, sliderId, setter){
+  const manual = document.getElementById(manualId);
+  const slider = document.getElementById(sliderId);
+  if(!manual || !slider) return;
+  manual.addEventListener('input', () => {
+    let raw = manual.value.replace(/,/g, '').replace(/[^0-9.]/g, '');
+    if(raw === '' || raw === '-' || raw === '.') return;
+    const num = Number(raw);
+    if(isNaN(num)) return;
+    const min = Number(slider.min), max = Number(slider.max);
+    const clamped = Math.min(max, Math.max(min, num));
+    slider.value = clamped;
+    setter(num);
+  });
+  manual.addEventListener('change', () => {
+    const min = Number(slider.min), max = Number(slider.max);
+    let num = Number(manual.value.replace(/,/g, '').replace(/[^0-9.]/g, ''));
+    if(isNaN(num)) num = Number(slider.value);
+    num = Math.min(max, Math.max(min, num));
+    manual.value = num.toLocaleString();
+    setter(num);
+  });
+}
+
+/* ---------------- populate country dropdown ---------------- */
+function populateCountries(){
+  const sel = document.getElementById('countrySelect');
+  const regions = {};
+  countryList.forEach(c => { (regions[c.region] ||= []).push(c); });
+  sel.innerHTML = '';
+  Object.keys(regions).sort().forEach(region => {
+    const og = document.createElement('optgroup');
+    og.label = region;
+    regions[region].forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.code;
+      opt.textContent = `${c.name} (${c.currencySymbol})`;
+      og.appendChild(opt);
+    });
+    sel.appendChild(og);
+  });
+  sel.value = state.country;
+}
+
+/* shared line-row builder, reused across the three phases */
+function makeLineRow(name, note, qtyLabel, unitPrice, cat, key, amount, editable=true){
+  const override = getOverride(cat, key);
+  const priceCell = editable ? `
+    <div class="line-meta col-price">
+      <input type="number" class="price-input ${override!==undefined?'overridden':''}" data-cat="${cat}" data-key="${key}"
+             placeholder="${unitPrice}"
+             value="${override!==undefined?override:''}"
+             step="any">
+    </div>` : `<div class="line-meta col-price">—</div>`;
+  const row = document.createElement('div');
+  row.className = 'line-row';
+  row.innerHTML = `
+    <div><div class="line-name">${name}</div><span class="line-note">${note}</span></div>
+    <div class="line-meta">${qtyLabel}</div>
+    ${priceCell}
+    <div class="line-total">${fmtMoney(amount)}</div>
+  `;
+  return row;
+}
+
+/* ---------------- Phase 1: Registration & Legal ---------------- */
+function renderPhase1(){
+  const list = document.getElementById('phase1List');
+  list.innerHTML = '';
+  const b = cd().business;
+  let subtotal = 0;
+
+  function add(name, note, key, baseVal){
+    const ov = getOverride('business', key);
+    const price = ov !== undefined ? ov : baseVal;
+    subtotal += price;
+    list.appendChild(makeLineRow(name, note, '1 ×', baseVal, 'business', key, price));
+  }
+
+  add('Registration Fee', `${state.structure.toUpperCase()} filing, min. fee`, 'registrationFeeMin', b.registrationFeeMin);
+  add('Legal Setup', 'operating agreement / bylaws / counsel', 'legalSetupFee', b.legalSetupFee);
+  add('Branding / Logo', 'identity design package', 'brandingCost', b.brandingCost);
+  add('Licenses / Permits', 'local business licensing', 'licensesPermitsCost', b.licensesPermitsCost);
+
+  document.getElementById('phase1Subtotal').textContent = fmtMoney(subtotal);
+  return subtotal;
+}
+
+/* ---------------- Phase 2: Setup & Fit-Out ---------------- */
+function renderPhase2(){
+  const list = document.getElementById('phase2List');
+  list.innerHTML = '';
+  const b = cd().business;
+  let subtotal = 0;
+
+  // Office furniture & equipment
+  const furnOv = getOverride('business','officeFurniture');
+  const furnPrice = furnOv !== undefined ? furnOv : b.officeFurniture;
+  subtotal += furnPrice;
+  list.appendChild(makeLineRow('Office Furniture & Equipment', 'desks, chairs, computers', '1 ×', b.officeFurniture, 'business','officeFurniture', furnPrice));
+
+  // Initial inventory — pure user input, varies by business type
+  const invOv = getOverride('business','_initialInventory');
+  const invPrice = invOv !== undefined ? invOv : 0;
+  subtotal += invPrice;
+  list.appendChild(makeLineRow('Initial Inventory', 'opening stock, user estimate', 'flat', 0, 'business','_initialInventory', invPrice));
+
+  // Lease deposit — expressed on an annual-rent basis (default = 2 months' worth),
+  // entered/overridden as a flat amount rather than a monthly multiplier
+  const rentOv = getOverride('business','avgMonthlyRentPerSqm');
+  const rentRate = rentOv !== undefined ? rentOv : b.avgMonthlyRentPerSqm;
+  const monthlyRent = state.sqft * rentRate;
+  const annualRent = monthlyRent * 12;
+  const depositDefault = monthlyRent * 2;
+  const depositOv = getOverride('business','_leaseDeposit');
+  const depositAmount = depositOv !== undefined ? depositOv : depositDefault;
+  subtotal += depositAmount;
+  list.appendChild(makeLineRow('Lease Deposit', `annual rent basis: ${fmtMoney(annualRent)}/yr (default = 2 months)`, 'amount/yr', depositDefault, 'business','_leaseDeposit', depositAmount));
+
+  document.getElementById('phase2Subtotal').textContent = fmtMoney(subtotal);
+  return subtotal;
+}
+
+/* ---------------- Phase 3: Monthly Burn ---------------- */
+function renderPhase3(){
+  const list = document.getElementById('phase3List');
+  list.innerHTML = '';
+  const b = cd().business;
+  let total = 0;
+  const lines = {};
+
+  function add(name, note, qtyLabel, key, baseVal, amount, editable=true){
+    total += amount;
+    lines[key] = amount;
+    list.appendChild(makeLineRow(name, note, qtyLabel, baseVal, 'business', key, amount, editable));
+  }
+
+  // Rent
+  const rentOv = getOverride('business','avgMonthlyRentPerSqm');
+  const rentRate = rentOv !== undefined ? rentOv : b.avgMonthlyRentPerSqm;
+  const rentAmount = state.sqft * rentRate;
+  add('Rent', `${state.sqft.toLocaleString()} sqft × rate`, `${state.sqft.toLocaleString()} sqft`, 'avgMonthlyRentPerSqm', b.avgMonthlyRentPerSqm, rentAmount);
+
+  // Payroll (base + payroll tax)
+  const payOv = getOverride('business','avgPayrollPerEmployee');
+  const payRate = payOv !== undefined ? payOv : b.avgPayrollPerEmployee;
+  const basePayroll = state.employees * payRate;
+  const taxOv = getOverride('business','payrollTaxRate');
+  const taxRate = taxOv !== undefined ? taxOv/100 : b.payrollTaxRate;
+  const payrollTax = basePayroll * taxRate;
+  add('Payroll (base)', `${state.employees} × avg. monthly pay`, `${state.employees} emp`, 'avgPayrollPerEmployee', b.avgPayrollPerEmployee, basePayroll);
+  add('Payroll Tax', `${(b.payrollTaxRate*100).toFixed(1)}% employer rate on base payroll`, `${(taxRate*100).toFixed(1)}%`, 'payrollTaxRate', b.payrollTaxRate*100, payrollTax);
+
+  // Utilities
+  const utilOv = getOverride('business','utilitiesPerSqm');
+  const utilRate = utilOv !== undefined ? utilOv : b.utilitiesPerSqm;
+  const utilAmount = state.sqft * utilRate;
+  add('Utilities', `${state.sqft.toLocaleString()} sqft × rate`, `${state.sqft.toLocaleString()} sqft`, 'utilitiesPerSqm', b.utilitiesPerSqm, utilAmount);
+
+  // Software subscriptions
+  const swOv = getOverride('business','softwareSubscriptionCost');
+  const swAmount = swOv !== undefined ? swOv : b.softwareSubscriptionCost;
+  add('Software Subscriptions', 'SaaS stack estimate', '1 ×', 'softwareSubscriptionCost', b.softwareSubscriptionCost, swAmount);
+
+  // Corporate tax (annual / 12) — applied against monthly revenue estimate as a proxy for taxable income
+  const ctOv = getOverride('business','corporateTaxRate');
+  const ctRate = ctOv !== undefined ? ctOv/100 : b.corporateTaxRate;
+  const corpTaxMonthly = (state.revenue * ctRate);
+  add('Corporate Tax', `${(ctRate*100).toFixed(1)}% of monthly revenue, annualized ÷ 12`, `${(ctRate*100).toFixed(1)}%`, 'corporateTaxRate', b.corporateTaxRate*100, corpTaxMonthly);
+
+  document.getElementById('monthlyBurnBar').textContent = fmtMoney(total);
+
+  // Break-even revenue = burn excluding corporate tax, grossed up for the tax rate
+  // (revenue needed so that revenue - (burn_excl_tax) - revenue*taxRate = 0)
+  const burnExclTax = total - corpTaxMonthly;
+  const breakEven = ctRate < 1 ? burnExclTax / (1 - ctRate) : burnExclTax;
+  document.getElementById('breakEvenStat').textContent = fmtMoney(breakEven);
+
+  const marginCard = document.getElementById('marginCard');
+  const marginStat = document.getElementById('marginStat');
+  const marginNote = document.getElementById('marginNote');
+  const diff = state.revenue - breakEven;
+  marginCard.classList.remove('positive','negative');
+  marginCard.classList.add(diff >= 0 ? 'positive' : 'negative');
+  marginStat.textContent = `${diff>=0?'+':''}${fmtMoney(diff)}`;
+  marginNote.textContent = diff >= 0
+    ? `${fmtMoney(state.revenue)} estimate clears break-even`
+    : `${fmtMoney(state.revenue)} estimate falls short of break-even`;
+
+  return { monthlyBurn: total, breakEven, rentAmount, payrollTotal: basePayroll + payrollTax, utilAmount, swAmount, corpTaxMonthly };
+}
+
+/* ---------------- Summary + Chart ---------------- */
+let chart;
+function renderSummary(p1, p2, p3){
+  const grand = p1 + p2 + (p3.monthlyBurn * 6);
+  document.getElementById('grandTotal').textContent = fmtMoney(grand);
+  document.getElementById('runwayStat').textContent = '6 mo';
+
+  const slices = [
+    { label:'Registration & Legal', value: p1, color:'#f5a623' },
+    { label:'Setup & Fit-Out',       value: p2, color:'#3ddc97' },
+    { label:'6mo Burn Reserve',      value: p3.monthlyBurn*6, color:'#5b8def' },
+  ];
+
+  const legend = document.getElementById('legend');
+  legend.innerHTML = slices.map(s => `
+    <div class="legend-item">
+      <span class="legend-dot" style="background:${s.color}"></span>
+      ${s.label} <b>${fmtMoney(s.value)}</b>
+    </div>
+  `).join('');
+
+  const ctx = document.getElementById('breakdownChart');
+  const data = {
+    labels: slices.map(s=>s.label),
+    datasets: [{ data: slices.map(s=>s.value), backgroundColor: slices.map(s=>s.color), borderColor:'#0e1d34', borderWidth:2 }]
+  };
+  if(chart){ chart.data = data; chart.update(); }
+  else{
+    chart = new Chart(ctx, {
+      type:'doughnut',
+      data,
+      options:{
+        plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:(c)=> `${c.label}: ${fmtMoney(c.raw)}` } } },
+        cutout:'62%'
+      }
+    });
+  }
+}
+
+/* ---------------- master render ---------------- */
+/* ---------------- master render ---------------- */
+function renderAll(){
+  document.getElementById('employeesVal').textContent = state.employees;
+  document.getElementById('sqftVal').textContent = state.sqft.toLocaleString();
+  syncManual('employeesManual', state.employees);
+  syncManual('sqftManual', state.sqft);
+
+  const p1 = renderPhase1();
+  const p2 = renderPhase2();
+  const p3 = renderPhase3();
+  renderSummary(p1, p2, p3);
+
+  // ----- Populate lastSummary for PDF -----
+  const b = cd().business;
+  const rentOv = getOverride('business','avgMonthlyRentPerSqm');
+  const rentRate = rentOv !== undefined ? rentOv : b.avgMonthlyRentPerSqm;
+  const monthlyRent = state.sqft * rentRate;
+  const annualRent = monthlyRent * 12;
+  const depositDefault = monthlyRent * 2;
+  const depositOv = getOverride('business','_leaseDeposit');
+  const depositAmount = depositOv !== undefined ? depositOv : depositDefault;
+
+  // Payroll details
+  const payOv = getOverride('business','avgPayrollPerEmployee');
+  const payRate = payOv !== undefined ? payOv : b.avgPayrollPerEmployee;
+  const basePayroll = state.employees * payRate;
+  const taxOv = getOverride('business','payrollTaxRate');
+  const taxRate = taxOv !== undefined ? taxOv/100 : b.payrollTaxRate;
+  const payrollTax = basePayroll * taxRate;
+
+  // Utilities
+  const utilOv = getOverride('business','utilitiesPerSqm');
+  const utilRate = utilOv !== undefined ? utilOv : b.utilitiesPerSqm;
+  const utilAmount = state.sqft * utilRate;
+
+  // Software
+  const swOv = getOverride('business','softwareSubscriptionCost');
+  const swAmount = swOv !== undefined ? swOv : b.softwareSubscriptionCost;
+
+  // Corporate tax
+  const ctOv = getOverride('business','corporateTaxRate');
+  const ctRate = ctOv !== undefined ? ctOv/100 : b.corporateTaxRate;
+  const corpTaxMonthly = (state.revenue * ctRate);
+
+  // Break-even
+  const burnExclTax = p3.monthlyBurn - corpTaxMonthly;
+  const breakEven = ctRate < 1 ? burnExclTax / (1 - ctRate) : burnExclTax;
+  const diff = state.revenue - breakEven;
+
+  lastSummary = {
+    // Parameters
+    employees: state.employees,
+    sqft: state.sqft,
+    structure: state.structure,
+    revenue: state.revenue,
+    // Phase 1
+    phase1Total: p1,
+    registrationFee: getOverride('business','registrationFeeMin') ?? b.registrationFeeMin,
+    legalSetup: getOverride('business','legalSetupFee') ?? b.legalSetupFee,
+    brandingCost: getOverride('business','brandingCost') ?? b.brandingCost,
+    licensesPermits: getOverride('business','licensesPermitsCost') ?? b.licensesPermitsCost,
+    // Phase 2
+    phase2Total: p2,
+    furnitureCost: getOverride('business','officeFurniture') ?? b.officeFurniture,
+    inventoryCost: getOverride('business','_initialInventory') ?? 0,
+    leaseDeposit: depositAmount,
+    annualRent: annualRent,
+    monthlyRent: monthlyRent,
+    // Phase 3
+    phase3Total: p3.monthlyBurn,
+    rentAmount: monthlyRent,
+    basePayroll: basePayroll,
+    payrollTax: payrollTax,
+    totalPayroll: basePayroll + payrollTax,
+    utilAmount: utilAmount,
+    swAmount: swAmount,
+    corpTaxMonthly: corpTaxMonthly,
+    breakEven: breakEven,
+    margin: diff,
+    isProfitable: diff >= 0,
+    // Grand total
+    grandTotal: p1 + p2 + (p3.monthlyBurn * 6),
+    // Country
+    countryCode: state.country,
+    currencySymbol: cd().currencySymbol,
+    // Tax rates for display
+    payrollTaxRate: taxRate,
+    corporateTaxRate: ctRate
+  };
+
+  store.settings = {
+    country: state.country, structure: state.structure, employees: state.employees,
+    sqft: state.sqft, revenue: state.revenue
+  };
+  saveStore();
+}
+
+/* ---------------- events ---------------- */
+document.getElementById('countrySelect').addEventListener('change', e => {
+  state.country = e.target.value;
+  renderAll();
+});
+document.getElementById('structureSeg').addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  state.structure = btn.dataset.s;
+  document.querySelectorAll('#structureSeg button').forEach(b=>b.classList.toggle('active', b===btn));
+  renderAll();
+});
+document.getElementById('employeesSlider').addEventListener('input', e => {
+  state.employees = Number(e.target.value);
+  renderAll();
+});
+document.getElementById('sqftSlider').addEventListener('input', e => {
+  state.sqft = Number(e.target.value);
+  renderAll();
+});
+document.getElementById('revenueInput').addEventListener('input', e => {
+  state.revenue = Number(e.target.value) || 0;
+  renderAll();
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+  delete store.overrides[state.country];
+  saveStore();
+  renderAll();
+});
+
+bindManual('employeesManual', 'employeesSlider', v => { state.employees = Math.round(v); renderAll(); });
+bindManual('sqftManual', 'sqftSlider', v => { state.sqft = v; renderAll(); });
+
+// Delegated listener for all custom-price / custom-rate inputs (rebuilt on every render).
+// We capture the raw typed string + cursor position before renderAll() destroys/recreates
+// the input, and restore that exact string afterward — not the derived number — so a
+// trailing "." or "0" typed mid-number never gets silently stripped.
+document.body.addEventListener('input', e => {
+  if(!e.target.classList.contains('price-input')) return;
+  const cat = e.target.dataset.cat, key = e.target.dataset.key;
+  const rawTyped = e.target.value;
+  const selStart = e.target.selectionStart, selEnd = e.target.selectionEnd;
+  const isPercentField = (key === 'payrollTaxRate' || key === 'corporateTaxRate');
+  const val = rawTyped === '' ? '' : (isPercentField ? Number(rawTyped)/100 : Number(rawTyped));
+  setOverride(cat, key, val);
+  renderAll();
+  const again = document.querySelector(`.price-input[data-cat="${cat}"][data-key="${key}"]`);
+  if(again){
+    again.value = rawTyped;
+    again.focus();
+    try{ again.setSelectionRange(selStart, selEnd); }catch(_){}
+  }
+});
+
+/* ---------------- init ---------------- */
+/* ---------------- PDF export ---------------- */
+/* ---------------- Professional PDF Export ---------------- */
+function generatePDF() {
+  const btn = document.getElementById('pdfBtn');
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 20;
+
+    // ----- Currency Symbol Mapping -----
+    const symbolMap = {
+      'NG': { symbol: '₦', fallback: 'NGN' },
+      'US': { symbol: '$', fallback: 'USD' },
+      'GB': { symbol: '£', fallback: 'GBP' },
+      'IN': { symbol: '₹', fallback: 'INR' },
+      'KE': { symbol: 'KSh', fallback: 'KES' },
+      'ZA': { symbol: 'R', fallback: 'ZAR' },
+      'GH': { symbol: 'GH₵', fallback: 'GHS' },
+      'EG': { symbol: 'E£', fallback: 'EGP' },
+      'DE': { symbol: '€', fallback: 'EUR' },
+      'FR': { symbol: '€', fallback: 'EUR' },
+      'ES': { symbol: '€', fallback: 'EUR' },
+      'IT': { symbol: '€', fallback: 'EUR' },
+      'NL': { symbol: '€', fallback: 'EUR' },
+      'CN': { symbol: '¥', fallback: 'CNY' },
+      'JP': { symbol: '¥', fallback: 'JPY' },
+      'SG': { symbol: 'S$', fallback: 'SGD' },
+      'ID': { symbol: 'Rp', fallback: 'IDR' },
+      'AE': { symbol: 'AED', fallback: 'AED' },
+      'CA': { symbol: 'C$', fallback: 'CAD' },
+      'AU': { symbol: 'A$', fallback: 'AUD' },
+    };
+    
+    const countryCode = state.country || 'US';
+    const currencyInfo = symbolMap[countryCode] || { symbol: '$', fallback: 'USD' };
+
+    // ----- Helper to format money -----
+    function fmtPDF(v) {
+      const clamped = Math.min(Math.max(v || 0, 0), 1000000000000);
+      if (countryCode === 'NG') {
+        return `NGN ${Math.round(clamped).toLocaleString()}`;
+      }
+      return currencyInfo.symbol + Math.round(clamped).toLocaleString();
+    }
+
+    function fmtPct(v) {
+      return (v * 100).toFixed(1) + '%';
+    }
+// ----- Theme Toggle (Dark/Light Mode) -----
+function setTheme(theme) {
+  const toggle = document.getElementById('themeToggle');
+  if (theme === 'light') {
+    document.body.classList.add('light-mode');
+    if (toggle) toggle.textContent = '☀️';
+  } else {
+    document.body.classList.remove('light-mode');
+    if (toggle) toggle.textContent = '🌙';
+  }
+  localStorage.setItem('budgetpro_theme', theme);
+}
+
+// Apply saved theme on load
+const savedTheme = localStorage.getItem('budgetpro_theme') || 'dark';
+setTheme(savedTheme);
+
+// Toggle on click
+document.addEventListener('click', function(e) {
+  if (e.target && e.target.id === 'themeToggle') {
+    const current = localStorage.getItem('budgetpro_theme') || 'dark';
+    setTheme(current === 'dark' ? 'light' : 'dark');
+  }
+});
+    // ----- Country Name -----
+    const countryMap = {
+      'NG': 'Nigeria', 'US': 'United States', 'GB': 'United Kingdom',
+      'IN': 'India', 'KE': 'Kenya', 'ZA': 'South Africa',
+      'GH': 'Ghana', 'EG': 'Egypt', 'DE': 'Germany',
+      'FR': 'France', 'ES': 'Spain', 'IT': 'Italy',
+      'NL': 'Netherlands', 'CN': 'China', 'JP': 'Japan',
+      'SG': 'Singapore', 'ID': 'Indonesia', 'AE': 'UAE',
+      'CA': 'Canada', 'AU': 'Australia',
+    };
+    const countryName = countryMap[countryCode] || 'Unknown';
+
+    // ----- Get summary data -----
+    const s = lastSummary || {};
+
+    // ----- HEADER -----
+    doc.setFillColor(10, 22, 40);
+    doc.rect(0, 0, pageWidth, 45, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.setTextColor(245, 166, 35);
+    doc.text('BudgetPro', 14, 30);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(255, 255, 255);
+    doc.text('BusinessPro Runway Estimate', 14, 40);
+
+    doc.setFontSize(9);
+    doc.setTextColor(140, 150, 180);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}  |  ${countryName} (${countryCode})`, 14, 52);
+    y = 62;
+
+    // ----- SECTION 1: Business Parameters -----
+    doc.setDrawColor(245, 166, 35);
+    doc.setLineWidth(0.5);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Business Parameters', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+
+    doc.text(`Structure: ${(s.structure || 'llc').toUpperCase()}`, 14, y); y += 6;
+    doc.text(`Employees: ${s.employees || 0}`, 14, y); y += 6;
+    doc.text(`Office Space: ${s.sqft || 0} sqft`, 14, y); y += 6;
+    doc.text(`Monthly Revenue Estimate: ${fmtPDF(s.revenue)}`, 14, y); y += 10;
+
+    // ----- SECTION 2: Phase 1 — Setup -----
+    doc.setDrawColor(245, 166, 35);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Phase 1 — Registration & Legal', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+
+    doc.text(`  └─ Registration Fee: ${fmtPDF(s.registrationFee)}`, 20, y); y += 5;
+    doc.text(`  └─ Legal Setup: ${fmtPDF(s.legalSetup)}`, 20, y); y += 5;
+    doc.text(`  └─ Branding / Logo: ${fmtPDF(s.brandingCost)}`, 20, y); y += 5;
+    doc.text(`  └─ Licenses / Permits: ${fmtPDF(s.licensesPermits)}`, 20, y); y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(245, 166, 35);
+    doc.text(`Phase 1 Subtotal: ${fmtPDF(s.phase1Total)}`, 14, y); y += 10;
+
+    // ----- SECTION 3: Phase 2 — Handover -----
+    doc.setDrawColor(245, 166, 35);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Phase 2 — Setup & Fit-Out', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+
+    doc.text(`  └─ Office Furniture: ${fmtPDF(s.furnitureCost)}`, 20, y); y += 5;
+    doc.text(`  └─ Initial Inventory: ${fmtPDF(s.inventoryCost)}`, 20, y); y += 5;
+    doc.text(`  └─ Lease Deposit: ${fmtPDF(s.leaseDeposit)} (${fmtPDF(s.annualRent)}/yr rent)`, 20, y); y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(245, 166, 35);
+    doc.text(`Phase 2 Subtotal: ${fmtPDF(s.phase2Total)}`, 14, y); y += 10;
+
+    // ----- SECTION 4: Phase 3 — Monthly Burn -----
+    doc.setDrawColor(245, 166, 35);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Phase 3 — Monthly Burn', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+
+    doc.text(`  └─ Rent (${s.sqft || 0} sqft): ${fmtPDF(s.rentAmount)}/mo`, 20, y); y += 5;
+    doc.text(`  └─ Payroll (${s.employees || 0} employees): ${fmtPDF(s.basePayroll)}/mo`, 20, y); y += 5;
+    doc.text(`  └─ Payroll Tax (${fmtPct(s.payrollTaxRate)}): ${fmtPDF(s.payrollTax)}/mo`, 20, y); y += 5;
+    doc.text(`  └─ Utilities: ${fmtPDF(s.utilAmount)}/mo`, 20, y); y += 5;
+    doc.text(`  └─ Software Subscriptions: ${fmtPDF(s.swAmount)}/mo`, 20, y); y += 5;
+    doc.text(`  └─ Corporate Tax (${fmtPct(s.corporateTaxRate)}): ${fmtPDF(s.corpTaxMonthly)}/mo`, 20, y); y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(245, 166, 35);
+    doc.text(`Total Monthly Burn: ${fmtPDF(s.phase3Total)}`, 14, y); y += 10;
+
+    // ----- SECTION 5: Financial Projections -----
+    doc.setDrawColor(245, 166, 35);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Financial Projections', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+
+    doc.text(`Monthly Break-Even Revenue: ${fmtPDF(s.breakEven)}`, 14, y); y += 6;
+    if (s.isProfitable) {
+      doc.text(`Revenue vs Break-Even: +${fmtPDF(s.margin)} (Profitable)`, 14, y); y += 6;
+    } else {
+      doc.text(`Revenue vs Break-Even: ${fmtPDF(s.margin)} (Shortfall)`, 14, y); y += 6;
+    }
+    doc.text(`Runway Covered: 6 months of burn reserved`, 14, y); y += 10;
+
+    // ----- SECTION 6: Grand Total -----
+    doc.setDrawColor(245, 166, 35);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Grand Summary', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+
+    doc.text(`Phase 1 (Registration & Legal): ${fmtPDF(s.phase1Total)}`, 14, y); y += 6;
+    doc.text(`Phase 2 (Setup & Fit-Out): ${fmtPDF(s.phase2Total)}`, 14, y); y += 6;
+    doc.text(`6-Month Burn Reserve: ${fmtPDF(s.phase3Total * 6)} (${fmtPDF(s.phase3Total)} × 6)`, 14, y); y += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(245, 166, 35);
+    doc.text(`Total Startup Capital Needed: ${fmtPDF(s.grandTotal)}`, 14, y); y += 12;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(80, 80, 80);
+    doc.text('Phase 1 + Phase 2 + (Phase 3 × 6 months)', 14, y); y += 10;
+
+    // ----- SECTION 7: Key Terms -----
+    doc.setDrawColor(245, 166, 35);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Key Terms Explained', 14, y);
+    y += 5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(80, 80, 80);
+
+    doc.text('• Runway: How long your startup capital will last at current burn rate.', 14, y); y += 4;
+    doc.text('• Break-Even Revenue: Monthly revenue needed to cover all operating costs.', 14, y); y += 4;
+    doc.text('• Burn Rate: Total monthly operating costs before generating profit.', 14, y); y += 4;
+    doc.text('• 6-Month Reserve: Standard safety net for unexpected costs or slow growth.', 14, y); y += 10;
+
+    // ----- SECTION 8: Recommendations -----
+    doc.setDrawColor(245, 166, 35);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Smart Recommendations', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 80);
+
+    const recItems = document.querySelectorAll('#recList li');
+    if (recItems && recItems.length > 0) {
+      recItems.forEach((li) => {
+        const text = li.textContent || 'Adjust the sliders to see personalized recommendations.';
+        const lines = doc.splitTextToSize(text, pageWidth - 28);
+        doc.text(lines, 14, y);
+        y += lines.length * 5 + 3;
+        if (y > 260) {
+          doc.addPage();
+          y = 20;
+        }
+      });
+    } else {
+      doc.text('Adjust the sliders to see personalized recommendations.', 14, y);
+      y += 6;
+    }
+
+    // ----- FOOTER -----
+    doc.setFontSize(8);
+    doc.setTextColor(140, 140, 140);
+    doc.text('All figures are editable local-market placeholders, not legal or accounting advice.', 14, 280);
+
+    doc.save(`BudgetPro-Business-${countryCode}.pdf`);
+  } catch (err) {
+    console.error('PDF Error:', err);
+    alert('PDF generation failed: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📄 Download PDF Summary';
+  }
+}
+document.getElementById('pdfBtn').addEventListener('click', generatePDF);
+
+function init(){
+  populateCountries();
+  document.getElementById('employeesSlider').value = state.employees;
+  document.getElementById('sqftSlider').value = state.sqft;
+  document.getElementById('revenueInput').value = state.revenue;
+  document.querySelectorAll('#structureSeg button').forEach(b=>b.classList.toggle('active', b.dataset.s===state.structure));
+  renderAll();
+}
+init();
+</script>
+</body>
+</html>
+

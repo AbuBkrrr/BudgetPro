@@ -300,6 +300,42 @@ body.light-mode .gn-link.active {
   }
   .manual-input:focus{outline:1px solid var(--gold);}
 </style>
+
+<!-- ===== ADSENSE ===== -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2229008759020664" crossorigin="anonymous"></script>
+
+<!-- BudgetPro -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-2229008759020664"
+     data-ad-slot="9906420300"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<!-- Budgetpro manual -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-2229008759020664"
+     data-ad-slot="6768946061"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+<!-- ===== END ADSENSE ===== -->
+
+<!-- ===== GOOGLE ANALYTICS ===== -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XEZBWF9ZVB"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XEZBWF9ZVB');
+</script>
+<!-- ===== END GOOGLE ANALYTICS ===== -->
 </head>
 <body>
 
@@ -346,12 +382,12 @@ body.light-mode .gn-link.active {
       <div class="field">
         <label>Floor Area <span class="val" id="sqmVal">120 m²</span></label>
         <input type="range" id="sqmSlider" min="50" max="5000" step="10" value="120">
-        <input type="number" class="manual-input" id="sqmManual" min="50" max="5000" step="10" value="120" aria-label="sqm manual entry">
+        <input type="text" inputmode="numeric" class="manual-input" id="sqmManual" min="50" max="5000" step="10" value="120" aria-label="sqm manual entry">
       </div>
       <div class="field">
         <label>Floors <span class="val" id="floorsVal">1</span></label>
         <input type="range" id="floorsSlider" min="1" max="5" step="1" value="1">
-        <input type="number" class="manual-input" id="floorsManual" min="1" max="5" step="1" value="1" aria-label="floors manual entry">
+        <input type="text" inputmode="numeric" class="manual-input" id="floorsManual" min="1" max="5" step="1" value="1" aria-label="floors manual entry">
       </div>
       <div class="field">
         <label>Build Quality</label>
@@ -559,7 +595,7 @@ function bindManual(manualId, sliderId, setter){
   const slider = document.getElementById(sliderId);
   if(!manual || !slider) return;
   manual.addEventListener('input', () => {
-    const raw = manual.value;
+    let raw = manual.value.replace(/,/g, '').replace(/[^0-9.]/g, '');
     if(raw === '' || raw === '-' || raw === '.') return;
     const num = Number(raw);
     if(isNaN(num)) return;
@@ -570,9 +606,10 @@ function bindManual(manualId, sliderId, setter){
   });
   manual.addEventListener('change', () => {
     const min = Number(slider.min), max = Number(slider.max);
-    let num = Number(manual.value);
+    let num = Number(manual.value.replace(/,/g, '').replace(/[^0-9.]/g, ''));
     if(isNaN(num)) num = Number(slider.value);
     num = Math.min(max, Math.max(min, num));
+    manual.value = num.toLocaleString();
     setter(num);
   });
 }

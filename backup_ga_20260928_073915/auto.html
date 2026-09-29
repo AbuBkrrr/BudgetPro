@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="google-adsense-account" content="ca-pub-2229008759020664">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BudgetPro — AutoPro Ownership Estimator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+  --navy-950: #0a1628;
+  --navy-900: #0e1d34;
+  --navy-850: #11223c;
+  --navy-800: #132846;
+  --navy-700: #1c3358;
+  --gold: #f5a623;
+  --gold-dim: #c8860f;
+  --gold-soft: rgba(245, 166, 35, 0.12);
+  --ink: #edf1f7;
+  --ink-muted: #8a96ac;
+  --ink-faint: #5c6883;
+  --line: rgba(245, 166, 35, 0.16);
+  --line-soft: rgba(255, 255, 255, 0.06);
+  --green: #3ddc97;
+  --red: #ef6a5f;
+  --display: "Space Grotesk", sans-serif;
+  --body: "Inter", sans-serif;
+  --mono: "IBM Plex Mono", monospace;
+}
+
+
+body.light-mode .global-nav {
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom-color: var(--line);
+}
+
+body.light-mode .sheet {
+  background: #ffffff;
+}
+
+body.light-mode .grand-card {
+  background: #ffffff;
+  border-color: var(--gold);
+}
+
+body.light-mode .manual-input,
+body.light-mode .num-field,
+body.light-mode .price-input {
+  background: #ffffff;
+  color: #1a1a2e;
+  border-color: var(--line);
+}
+
+body.light-mode .line-row:nth-child(even) {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+body.light-mode .subtotal-bar {
+  background: var(--navy-850);
+}
+
+body.light-mode .stat-card {
+  background: #ffffff;
+}
+
+body.light-mode .chart-card {
+  background: #ffffff;
+}
+
+body.light-mode .recommendations {
+  background: var(--gold-soft);
+}
+
+body.light-mode .topbar {
+  border-bottom-color: var(--line);
+}
+
+body.light-mode select#countrySelect {
+  background: #ffffff;
+  color: #1a1a2e;
+}
+
+body.light-mode .gn-link {
+  color: var(--ink-muted);
+}
+body.light-mode .gn-link:hover {
+  color: var(--ink);
+  background: var(--navy-850);
+}
+body.light-mode .gn-link.active {
+  color: var(--gold);
+  background: var(--gold-soft);
+}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--navy-950);
+    color:var(--ink);
+    font-family:var(--body);
+    min-height:100vh;
+    position:relative;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* asphalt / lane-marking backdrop instead of blueprint grid */
+  body::before{
+    content:"";
+    position:fixed;inset:0;
+    background-image:
+      repeating-linear-gradient(90deg, rgba(245,166,35,.09) 0 46px, transparent 46px 96px);
+    background-position:0 6px;
+    height:2px;
+    opacity:.5;
+    pointer-events:none;
+    z-index:0;
+    mask-image:linear-gradient(180deg, transparent, rgba(0,0,0,.5) 8%, rgba(0,0,0,.5) 92%, transparent);
+  }
+  body::after{
+    content:"";
+    position:fixed;inset:0;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(245,166,35,.035) 0 1px, transparent 1px 42px),
+      repeating-linear-gradient(90deg, rgba(245,166,35,.035) 0 1px, transparent 1px 42px);
+    pointer-events:none;
+    z-index:0;
+  }
+  a{color:var(--gold);}
+  .wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 20px 80px;}
+
+  /* ---------- topbar ---------- */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:20px;
+    padding:22px 20px;border-bottom:1px solid var(--line);
+    max-width:1180px;margin:0 auto;position:relative;z-index:1;flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand .mark{
+    font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:.5px;color:var(--ink);
+  }
+  .brand .mark span{color:var(--gold);}
+  .brand .tagline{font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:.08em;text-transform:uppercase;}
+  .country-picker{display:flex;align-items:center;gap:10px;}
+  .country-picker label{font-family:var(--mono);font-size:11px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.06em;}
+  select#countrySelect{
+    background:var(--navy-850);color:var(--ink);border:1px solid var(--line);
+    border-radius:8px;padding:9px 14px;font-family:var(--body);font-size:14px;font-weight:600;
+    min-width:220px;cursor:pointer;
+  }
+  select#countrySelect:focus{outline:2px solid var(--gold);outline-offset:1px;}
+
+  /* ---------- section shell ---------- */
+  .sheet{
+    margin-top:34px;background:var(--navy-900);border:1px solid var(--line-soft);
+    border-radius:14px;padding:26px 26px 22px;position:relative;overflow:hidden;
+  }
+  .sheet::before{
+    content:"";position:absolute;top:0;left:0;width:100%;height:3px;
+    background:linear-gradient(90deg,var(--gold),transparent 70%);
+  }
+  .sheet-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:20px;flex-wrap:wrap;}
+  .sheet-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--gold);text-transform:uppercase;}
+  .sheet-title{font-family:var(--display);font-size:20px;font-weight:600;margin:4px 0 0;color:var(--ink);}
+  .sheet-sub{font-family:var(--body);font-size:13px;color:var(--ink-muted);margin-top:6px;max-width:540px;}
+  .sheet-num{font-family:var(--mono);font-size:11px;color:var(--ink-faint);border:1px solid var(--line);border-radius:20px;padding:5px 12px;white-space:nowrap;}
+
+  /* ---------- inputs panel ---------- */
+  .inputs-grid{display:grid;grid-template-columns:repeat(4, 1fr);gap:24px;}
+  .field-wide{grid-column:span 2;}
+  .field{display:flex;flex-direction:column;gap:10px;}
+  .field label{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-muted);display:flex;justify-content:space-between;}
+  .field label .val{color:var(--gold);font-weight:600;}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;
+    background:var(--navy-700);outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;
+    background:var(--gold);border:3px solid var(--navy-950);cursor:pointer;box-shadow:0 0 0 1px var(--gold);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:18px;height:18px;border-radius:50%;background:var(--gold);border:3px solid var(--navy-950);cursor:pointer;
+  }
+  .num-field{
+    background:var(--navy-800);border:1px solid var(--line);border-radius:8px;
+    color:var(--ink);font-family:var(--mono);font-size:14px;padding:10px 12px;width:100%;
+  }
+  .num-field:focus{outline:1px solid var(--gold);}
+  .segmented{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  .segmented button{flex:1 1 auto;min-width:64px;background:transparent;border:none;color:var(--ink-muted);font-family:var(--body);font-size:12px;font-weight:600;padding:9px 4px;cursor:pointer;border-right:1px solid var(--line);border-bottom:1px solid var(--line);transition:.15s;white-space:nowrap;}
+  .segmented button:last-child{border-right:none;}
+  .segmented button.active{background:var(--gold);color:var(--navy-950);}
+  .segmented button:hover:not(.active){background:var(--navy-800);color:var(--ink);}
+  .toggle-row{display:flex;align-items:center;gap:12px;height:38px;}
+  .switch{position:relative;width:46px;height:26px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider-pill{position:absolute;inset:0;background:var(--navy-700);border-radius:14px;cursor:pointer;transition:.2s;border:1px solid var(--line);}
+  .slider-pill::before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:var(--ink-muted);border-radius:50%;transition:.2s;}
+  .switch input:checked + .slider-pill{background:var(--gold-soft);border-color:var(--gold);}
+  .switch input:checked + .slider-pill::before{transform:translateX(20px);background:var(--gold);}
+  .toggle-label{font-family:var(--body);font-size:13px;font-weight:600;color:var(--ink);}
+
+  /* ---------- tables ---------- */
+  .table-scroll{overflow-x:auto;border:1px solid var(--line-soft);border-radius:10px;}
+  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px;min-width:640px;}
+  thead th{
+    text-align:left;background:var(--navy-850);color:var(--ink-faint);font-size:10.5px;
+    text-transform:uppercase;letter-spacing:.07em;padding:11px 14px;border-bottom:1px solid var(--line);font-weight:600;
+    position:sticky;top:0;
+  }
+  tbody td{padding:10px 14px;border-bottom:1px solid var(--line-soft);color:var(--ink);vertical-align:middle;}
+  tbody tr:hover{background:rgba(245,166,35,.035);}
+  tbody tr:last-child td{border-bottom:none;}
+  td.mat-name{font-family:var(--body);font-weight:600;color:var(--ink);}
+  td.mat-name .unit-tag{display:block;font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);font-weight:400;margin-top:2px;}
+  .num{text-align:right;font-variant-numeric:tabular-nums;}
+  .price-input{
+    width:110px;background:var(--navy-800);border:1px solid var(--line);border-radius:6px;
+    color:var(--gold);font-family:var(--mono);font-size:12.5px;padding:7px 9px;text-align:right;
+  }
+  .price-input::placeholder{color:var(--ink-faint);}
+  .price-input:focus{outline:1px solid var(--gold);}
+  .price-input.overridden{border-color:var(--gold);background:rgba(245,166,35,.08);}
+  tfoot td{padding:14px;font-family:var(--display);font-weight:600;font-size:15px;border-top:1px solid var(--line);}
+
+  /* ---------- phase2 / phase3 line rows ---------- */
+  .line-list{display:flex;flex-direction:column;gap:0;border:1px solid var(--line-soft);border-radius:10px;overflow:hidden;}
+  .line-row{
+    display:grid;grid-template-columns:1.6fr .9fr .9fr .9fr;gap:14px;align-items:center;
+    padding:13px 16px;border-bottom:1px solid var(--line-soft);
+  }
+  .line-row:last-child{border-bottom:none;}
+  .line-row:nth-child(even){background:rgba(255,255,255,.015);}
+  .line-name{font-family:var(--body);font-weight:600;font-size:13.5px;}
+  .line-note{display:block;font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);font-weight:400;margin-top:3px;}
+  .line-meta{font-family:var(--mono);font-size:12px;color:var(--ink-muted);text-align:right;}
+  .line-total{font-family:var(--mono);font-size:13.5px;color:var(--gold);text-align:right;font-weight:600;}
+
+  .subtotal-bar{
+    display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding:14px 18px;
+    background:var(--navy-850);border:1px solid var(--line);border-radius:10px;
+  }
+  .subtotal-bar .label{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-muted);}
+  .subtotal-bar .amount{font-family:var(--display);font-size:19px;font-weight:700;color:var(--gold);}
+
+  .accessories-empty{
+    padding:20px;text-align:center;font-family:var(--mono);font-size:12px;color:var(--ink-faint);
+    border:1px dashed var(--line);border-radius:10px;
+  }
+
+  /* ---------- warning banner (the 10% rule trap) ---------- */
+  .warning-banner{
+    display:none;align-items:center;gap:12px;margin-top:16px;padding:14px 18px;
+    background:var(--red-soft);border:1px solid var(--red);border-radius:10px;
+  }
+  .warning-banner.show{display:flex;}
+  .warning-banner .icon{font-size:18px;flex-shrink:0;}
+  .warning-banner .msg{font-family:var(--body);font-weight:600;font-size:13.5px;color:var(--red);}
+  .warning-banner .msg small{display:block;font-family:var(--mono);font-weight:400;font-size:11.5px;color:#f2a49d;margin-top:3px;}
+
+  /* ---------- summary ---------- */
+  .summary-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:start;}
+  .grand-card{
+    background:linear-gradient(160deg,var(--navy-850),var(--navy-900));border:1px solid var(--gold);
+    border-radius:14px;padding:30px;text-align:center;
+  }
+  .grand-card .g-label{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);}
+  .grand-card .g-amount{font-family:var(--display);font-size:44px;font-weight:700;color:var(--ink);margin:10px 0 6px;word-break:break-word;}
+  .grand-card .g-sub{font-family:var(--mono);font-size:12px;color:var(--ink-muted);}
+  .breakdown-legend{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px;text-align:left;}
+  .legend-item{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;color:var(--ink-muted);}
+  .legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+  .legend-item b{color:var(--ink);font-weight:600;margin-left:auto;}
+  .chart-card{background:var(--navy-850);border:1px solid var(--line-soft);border-radius:14px;padding:20px;}
+  .reset-btn{
+    margin-top:18px;width:100%;background:transparent;border:1px solid var(--line);color:var(--ink-muted);
+    font-family:var(--mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;padding:11px;border-radius:8px;cursor:pointer;
+  }
+  .reset-btn:hover{border-color:var(--red);color:var(--red);}
+  .pdf-btn{
+    margin-top:10px;width:100%;background:var(--gold-soft);border:1px solid var(--gold);color:var(--gold);
+    font-family:var(--mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;padding:11px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s;
+  }
+  .pdf-btn:hover{background:var(--gold);color:var(--navy-950);}
+  .pdf-btn:disabled{opacity:.5;cursor:wait;}
+
+  .foot-note{margin-top:40px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--ink-faint);line-height:1.7;}
+
+  @media(max-width:900px){
+    .inputs-grid{grid-template-columns:1fr 1fr;}
+    .summary-grid{grid-template-columns:1fr;}
+    .line-row{grid-template-columns:1.3fr 1fr 1fr;}
+    .line-row .col-price{display:none;}
+  }
+  @media(max-width:560px){
+    .inputs-grid{grid-template-columns:1fr;}
+    .sheet{padding:20px 16px;}
+    .grand-card .g-amount{font-size:32px;}
+  }
+
+  /* ===================== GLOBAL STICKY NAV (identical on every page) ===================== */
+  .global-nav{position:sticky;top:0;z-index:100;background:rgba(10,22,40,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+  .gn-inner{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:18px;padding:12px 20px;}
+  .gn-logo{font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:.4px;color:var(--ink);text-decoration:none;flex-shrink:0;white-space:nowrap;}
+  .gn-logo span{color:var(--gold);}
+  .gn-links{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;}
+  .gn-links::-webkit-scrollbar{display:none;}
+  .gn-link{
+    display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;
+    font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink-muted);
+    text-decoration:none;padding:8px 12px;border-radius:8px;transition:.15s;border:1px solid transparent;
+  }
+  .gn-link:hover{color:var(--ink);background:var(--navy-850);}
+  .gn-link.active{color:var(--gold);background:var(--gold-soft);border-color:var(--line);}
+  .gn-emoji{font-size:14px;}
+  @media(max-width:720px){
+    .gn-link .gn-text{display:none;}
+    .gn-link{padding:8px 10px;}
+    .gn-logo{font-size:14px;}
+  }
+
+  .manual-input{
+    margin-top:8px;width:100%;background:var(--navy-800);border:1px solid var(--line);
+    border-radius:6px;color:var(--gold);font-family:var(--mono);font-size:12.5px;
+    padding:7px 9px;text-align:center;
+  }
+  .manual-input:focus{outline:1px solid var(--gold);}
+</style>
+
+<!-- ===== ADSENSE ===== -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2229008759020664" crossorigin="anonymous"></script>
+
+<!-- BudgetPro -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-2229008759020664"
+     data-ad-slot="9906420300"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<!-- Budgetpro manual -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-2229008759020664"
+     data-ad-slot="6768946061"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+<!-- ===== END ADSENSE ===== -->
+</head>
+<body>
+
+<header class="global-nav">
+  <div class="gn-inner">
+    <a href="index.html" class="gn-logo">BUDGET<span>PRO</span></a>
+    <nav class="gn-links">
+      <a href="mortgage.html" class="gn-link"><span class="gn-emoji">🏠</span><span class="gn-text">Mortgage</span></a>
+      <a href="auto.html" class="gn-link active"><span class="gn-emoji">🚗</span><span class="gn-text">Auto</span></a>
+      <a href="construction.html" class="gn-link"><span class="gn-emoji">🏗️</span><span class="gn-text">Construction</span></a>
+      <a href="solar.html" class="gn-link"><span class="gn-emoji">☀️</span><span class="gn-text">Solar</span></a>
+      <a href="business.html" class="gn-link"><span class="gn-emoji">🏢</span><span class="gn-text">Business</span></a>
+      <a href="income.html" class="gn-link"><span class="gn-emoji">💰</span><span class="gn-text">Savings</span></a>
+    </nav>
+  </div>
+</header>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="mark">BUDGET<span>PRO</span></span>
+    <span class="tagline">AutoPro Ownership Estimator</span>
+  </div>
+  <div class="country-picker">
+    <label for="countrySelect">Country</label>
+    <select id="countrySelect"></select>
+    
+  </div>
+</header>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- VEHICLE & FINANCING PARAMETERS -->
+  <section class="sheet" id="paramsSheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Vehicle &amp; Financing</div>
+        <div class="sheet-title">Define the deal</div>
+      </div>
+      <div class="sheet-num">SHEET 00 / 03</div>
+    </div>
+    <div class="inputs-grid">
+      <div class="field">
+        <label>Car Price (base) <span class="val" id="priceVal">25,000</span></label>
+        <input type="range" id="priceSlider" min="0" max="999999999" step="500" value="25000">
+        <input type="text" inputmode="numeric" class="manual-input" id="priceManual" min="0" max="999999999" step="500" value="25000" aria-label="price manual entry">
+      </div>
+      <div class="field">
+        <label>Down Payment / Trade-in <span class="val" id="downVal">20%</span></label>
+        <input type="range" id="downSlider" min="0" max="100" step="1" value="20">
+        <input type="text" inputmode="numeric" class="manual-input" id="downManual" min="0" max="100" step="1" value="20" aria-label="down payment percent manual entry">
+      </div>
+      <div class="field">
+        <label>Loan Term <span class="val" id="termVal">60 mo</span></label>
+        <input type="range" id="termSlider" min="0" max="84" step="6" value="60">
+        <input type="text" inputmode="numeric" class="manual-input" id="termManual" min="0" max="84" step="6" value="60" aria-label="term manual entry">
+      </div>
+      <div class="field">
+        <label>Interest Rate (APR) <span class="val" id="rateVal">7.5%</span></label>
+        <input type="range" id="rateSlider" min="0" max="50" step="0.1" value="7.5">
+        <input type="text" inputmode="numeric" class="manual-input" id="rateManual" min="0" max="50" step="0.1" value="7.5" aria-label="rate manual entry">
+      </div>
+      <div class="field">
+        <label>Annual Distance(km) <span class="val" id="mileageVal">12,000</span></label>
+        <input type="range" id="mileageSlider" min="100" max="600000" step="500" value="12000">
+        <input type="text" inputmode="numeric" class="manual-input" id="mileageManual" min="100" max="600000" step="500" value="12000" aria-label="mileage manual entry">
+      </div>
+      <div class="field">
+        <label>Efficiency <span class="val" id="efficiencyVal">28</span></label>
+        <div class="line-note" id="efficiencyUnitLabel" style="margin-bottom:4px;">distance / liter</div>
+        <input type="range" id="efficiencySlider" min="1" max="60" step="1" value="28">
+        <input type="text" inputmode="numeric" class="manual-input" id="efficiencyManual" min="1" max="60" step="1" value="28" aria-label="efficiency manual entry">
+      </div>
+      <div class="field field-wide">
+        <label>Powertrain</label>
+        <div class="segmented" id="powertrainSeg">
+          <button data-p="petrol" class="active">Petrol</button>
+          <button data-p="diesel">Diesel</button>
+          <button data-p="hybrid">Hybrid</button>
+          <button data-p="electric">Electric</button>
+          <button data-p="cng">CNG</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Insurance Billing</label>
+        <div class="segmented" id="insuranceModeSeg">
+          <button data-mode="monthly" class="active">Monthly</button>
+          <button data-mode="annual">Annual</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Est. Monthly Income</label>
+        <input type="number" class="num-field" id="incomeInput" value="4500" min="0" step="50">
+      </div>
+      <div class="field">
+        <label>Accessories</label>
+        <div class="toggle-row">
+          <label class="switch">
+            <input type="checkbox" id="accessoriesToggle" checked>
+            <span class="slider-pill"></span>
+          </label>
+          <span class="toggle-label" id="accessoriesLabel">Included</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PHASE 1 -->
+  <section class="sheet" id="phase1Sheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Phase 01 — Setup</div>
+        <div class="sheet-title">Drive-Away Price</div>
+        <div class="sheet-sub">Suggested tax, fee and duty rates pull from local market data. Override any of them to match your dealership's actual quote.</div>
+      </div>
+      <div class="sheet-num">SHEET 01 / 03</div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Line Item</th>
+            <th class="num">Basis</th>
+            <th class="num">Suggested Rate</th>
+            <th class="num">Custom Rate</th>
+            <th class="num">Amount</th>
+          </tr>
+        </thead>
+        <tbody id="driveAwayBody"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4">Total Drive-Away Price</td>
+            <td class="num" id="driveAwaySubtotal">—</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </section>
+
+  <!-- PHASE 2 -->
+  <section class="sheet" id="phase2Sheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Phase 02 — Handover</div>
+        <div class="sheet-title">Accessories</div>
+        <div class="sheet-sub">Optional add-ons applied at pickup. Toggle off if you're taking the car stock.</div>
+      </div>
+      <div class="sheet-num">SHEET 02 / 03</div>
+    </div>
+    <div class="line-list" id="phase2List"></div>
+    <div class="subtotal-bar">
+      <span class="label">Accessories Subtotal</span>
+      <span class="amount" id="phase2Subtotal">—</span>
+    </div>
+  </section>
+
+  <!-- PHASE 3 -->
+  <section class="sheet" id="phase3Sheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Phase 03 — Recurring</div>
+        <div class="sheet-title">Monthly Ownership Burn</div>
+        <div class="sheet-sub">Ongoing monthly cost of keeping this vehicle on the road — loan, fuel, insurance and maintenance.</div>
+      </div>
+      <div class="sheet-num">SHEET 03 / 03</div>
+    </div>
+    <div class="line-list" id="phase3List"></div>
+    <div class="subtotal-bar">
+      <span class="label">Total Monthly Ownership Cost</span>
+      <span class="amount" id="monthlyTotal">—</span>
+    </div>
+    <div class="warning-banner" id="warningBanner">
+      <span class="icon">⚠️</span>
+      <span class="msg">You are exceeding the 10% auto rule!
+        <small id="warningDetail"></small>
+      </span>
+    </div>
+  </section>
+
+  <!-- SUMMARY -->
+  <section class="sheet" id="summarySheet">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-eyebrow">Grand Summary</div>
+        <div class="sheet-title">Total on-the-road cost</div>
+      </div>
+    </div>
+    <div class="summary-grid">
+      <div class="grand-card">
+        <div class="g-label">Total Drive-Away + Accessories Cost</div>
+        <div class="g-amount" id="grandTotal">—</div>
+        <div class="g-sub">Base Price + Tax + Fees + Duty + Accessories</div>
+        <div class="breakdown-legend" id="legend"></div>
+      </div>
+      <div class="chart-card">
+        <canvas id="breakdownChart" height="260"></canvas>
+        <button class="reset-btn" id="resetBtn">Reset all overrides for this country</button>
+        <button class="pdf-btn" id="pdfBtn">📄 Download PDF Summary</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot-note">
+    All rates and prices are editable local-market placeholders, not live quotes — verify with your dealer and lender before budgeting.<br>
+    Your custom rates are saved to this browser automatically and reload with the page.
+  <br><br>A product of AI Brains Ventures — <a href="http://www.aibrainsventures.is-great.net/" target="_blank" rel="noopener">www.aibrainsventures.is-great.net</a></div>
+
+</div>
+
+<script src="countryData.js"></script>
+<script>
+
+/* ---------------- state ---------------- */
+const STORE_KEY = 'budgetpro_auto_v1';
+let store = loadStore();
+let lastSummary = {};
+
+let state = {
+  country: store.settings.country || 'NG',
+  price: store.settings.price ?? 25000,
+  downPct: store.settings.downPct ?? 20,
+  term: store.settings.term ?? 60,
+  rate: store.settings.rate ?? 7.5,
+  mileage: store.settings.mileage ?? 12000,
+  efficiency: store.settings.efficiency ?? 28,
+  income: store.settings.income ?? 4500,
+  accessories: store.settings.accessories ?? true,
+  powertrain: store.settings.powertrain || 'petrol',
+  insuranceMode: store.settings.insuranceMode || 'monthly',
+};
+
+function loadStore(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){ /* ignore corrupt storage */ }
+  return { settings:{}, overrides:{} };
+}
+function saveStore(){
+  localStorage.setItem(STORE_KEY, JSON.stringify(store));
+}
+function getOverride(category, key){
+  const c = store.overrides[state.country];
+  if(!c) return undefined;
+  const v = c[category + '.' + key];
+  return (v === undefined || v === null || v === '') ? undefined : v;
+}
+function setOverride(category, key, value){
+  if(!store.overrides[state.country]) store.overrides[state.country] = {};
+  const k = category + '.' + key;
+  if(value === '' || value === null || value === undefined || isNaN(value)){
+    delete store.overrides[state.country][k];
+  }else{
+    store.overrides[state.country][k] = Number(value);
+  }
+  saveStore();
+}
+
+/* ---------------- helpers ---------------- */
+function cd(){ return countryData[state.country]; }
+function sym(){ return cd().currencySymbol; }
+function fmtMoney(v){
+  return sym() + Math.round(v).toLocaleString(undefined,{maximumFractionDigits:0});
+}
+function fmtRate(v, isPercent){
+  return isPercent ? (v*100).toFixed(2) + '%' : sym() + Number(v).toLocaleString();
+}
+
+/* Keep a manual-entry number input in sync with its slider/state, unless the
+   user currently has that field focused (so we never fight their typing). */
+function syncManual(id, value){
+  const el = document.getElementById(id);
+  if(el && document.activeElement !== el) el.value = value;
+}
+/* Wire a manual number input to drive the same state as its paired slider. */
+function bindManual(manualId, sliderId, setter){
+  const manual = document.getElementById(manualId);
+  const slider = document.getElementById(sliderId);
+  if(!manual || !slider) return;
+  manual.addEventListener('input', () => {
+    let raw = manual.value.replace(/,/g, '').replace(/[^0-9.]/g, '');
+    if(raw === '' || raw === '-' || raw === '.') return;
+    const num = Number(raw);
+    if(isNaN(num)) return;
+    const min = Number(slider.min), max = Number(slider.max);
+    const clamped = Math.min(max, Math.max(min, num));
+    slider.value = clamped;
+    setter(num);
+  });
+  manual.addEventListener('change', () => {
+    const min = Number(slider.min), max = Number(slider.max);
+    let num = Number(manual.value.replace(/,/g, '').replace(/[^0-9.]/g, ''));
+    if(isNaN(num)) num = Number(slider.value);
+    num = Math.min(max, Math.max(min, num));
+    manual.value = num.toLocaleString();
+    setter(num);
+  });
+}
+
+/* ---------------- populate country dropdown ---------------- */
+function populateCountries(){
+  const sel = document.getElementById('countrySelect');
+  const regions = {};
+  countryList.forEach(c => { (regions[c.region] ||= []).push(c); });
+  sel.innerHTML = '';
+  Object.keys(regions).sort().forEach(region => {
+    const og = document.createElement('optgroup');
+    og.label = region;
+    regions[region].forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.code;
+      opt.textContent = `${c.name} (${c.currencySymbol})`;
+      og.appendChild(opt);
+    });
+    sel.appendChild(og);
+  });
+  sel.value = state.country;
+}
+
+/* ---------------- Phase 1: Drive-Away Price ---------------- */
+function renderPhase1(){
+  const tbody = document.getElementById('driveAwayBody');
+  tbody.innerHTML = '';
+  const a = cd().auto;
+  const price = state.price;
+  let total = price;
+
+  function addLine(name, unitLabel, basis, baseRate, cat, key, amount, isPercent){
+    total += amount;
+    const override = getOverride(cat, key);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="mat-name">${name}<span class="unit-tag">${unitLabel}</span></td>
+      <td class="num">${basis}</td>
+      <td class="num">${fmtRate(baseRate, isPercent)}</td>
+      <td class="num">
+        <input type="number" class="price-input ${override!==undefined?'overridden':''}"
+               data-cat="${cat}" data-key="${key}"
+               placeholder="${isPercent ? (baseRate*100).toFixed(2) : baseRate}"
+               value="${override!==undefined? (isPercent? override*100 : override) :''}"
+               step="${isPercent?'0.01':'any'}">
+      </td>
+      <td class="num">${fmtMoney(amount)}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  // Base price row (display only, not overridable here — it's the slider input)
+  const baseRow = document.createElement('tr');
+  baseRow.innerHTML = `
+    <td class="mat-name">Car Price<span class="unit-tag">base</span></td>
+    <td class="num">—</td>
+    <td class="num">—</td>
+    <td class="num">—</td>
+    <td class="num">${fmtMoney(price)}</td>
+  `;
+  tbody.appendChild(baseRow);
+
+  // Sales tax
+  const taxRateOv = getOverride('auto','salesTaxRate');
+  const taxRate = taxRateOv !== undefined ? taxRateOv/100 : a.salesTaxRate;
+  addLine('Sales Tax', 'rate × price', `${(a.salesTaxRate*100).toFixed(2)}% base`, a.salesTaxRate, 'auto','salesTaxRate', price*taxRate, true);
+
+  // Registration fee (flat)
+  const regOv = getOverride('auto','registrationFee');
+  const regFee = regOv !== undefined ? regOv : a.registrationFee;
+  addLine('Registration Fee', 'flat fee', 'flat', a.registrationFee, 'auto','registrationFee', regFee, false);
+
+  // Import duty
+  const dutyOv = getOverride('auto','importDutyRate');
+  const dutyRate = dutyOv !== undefined ? dutyOv/100 : a.importDutyRate;
+  addLine('Import Duty', 'rate × price', `${(a.importDutyRate*100).toFixed(2)}% base`, a.importDutyRate, 'auto','importDutyRate', price*dutyRate, true);
+
+  document.getElementById('driveAwaySubtotal').textContent = fmtMoney(total);
+  return { driveAwayTotal: total, salesTax: price*taxRate, registrationFee: regFee, importDuty: price*dutyRate };
+}
+
+/* ---------------- Phase 2: Accessories ---------------- */
+function renderPhase2(){
+  const list = document.getElementById('phase2List');
+  list.innerHTML = '';
+  let subtotal = 0;
+
+  if(!state.accessories){
+    list.innerHTML = `<div class="accessories-empty">Accessories excluded — toggle "Accessories" on above to add tinting, sound, rims &amp; dashcam.</div>`;
+    document.getElementById('phase2Subtotal').textContent = fmtMoney(0);
+    return 0;
+  }
+
+  const a = cd().auto;
+
+  function addRow(name, note, unitPrice, cat, key){
+    const override = getOverride(cat, key);
+    const price = override !== undefined ? override : unitPrice;
+    subtotal += price;
+    const row = document.createElement('div');
+    row.className = 'line-row';
+    row.innerHTML = `
+      <div><div class="line-name">${name}</div><span class="line-note">${note}</span></div>
+      <div class="line-meta">1 ×</div>
+      <div class="line-meta col-price">
+        <input type="number" class="price-input" data-cat="${cat}" data-key="${key}"
+               placeholder="${unitPrice}"
+               value="${override!==undefined?override:''}">
+      </div>
+      <div class="line-total">${fmtMoney(price)}</div>
+    `;
+    list.appendChild(row);
+  }
+
+  addRow('Window Tinting', 'full vehicle', a.tintingCost, 'auto','tintingCost');
+  addRow('Premium Sound System', 'installed', a.soundSystemCost, 'auto','soundSystemCost');
+  addRow('Custom Rims', 'set of 4', a.customRimsCost, 'auto','customRimsCost');
+  addRow('Dashcam', 'front + rear', a.dashcamCost, 'auto','dashcamCost');
+  addRow('Custom Seat Covers', 'full set', a.seatCoversCost, 'auto','seatCoversCost');
+  addRow('Floor / Foot Mats', 'full set', a.floorMatsCost, 'auto','floorMatsCost');
+
+  document.getElementById('phase2Subtotal').textContent = fmtMoney(subtotal);
+  return subtotal;
+}
+
+/* ---------------- Phase 3: Monthly Burn ---------------- */
+function amortizedPayment(principal, annualRatePct, months){
+  if(principal <= 0) return 0;
+  const r = (annualRatePct/100) / 12;
+  if(r === 0) return principal / months;
+  const factor = Math.pow(1+r, months);
+  return principal * (r*factor) / (factor - 1);
+}
+
+function renderPhase3(driveAwayTotal){
+  const list = document.getElementById('phase3List');
+  list.innerHTML = '';
+  const a = cd().auto;
+  let total = 0;
+
+  function addRow(name, note, qtyLabel, unitPrice, cat, key, lineTotal, editable=true, displayOverride){
+    total += lineTotal;
+    const row = document.createElement('div');
+    row.className = 'line-row';
+    const storedOv = getOverride(cat, key);
+    const shownVal = displayOverride !== undefined ? displayOverride : storedOv;
+    const priceCell = editable ? `
+      <div class="line-meta col-price">
+        <input type="number" class="price-input" data-cat="${cat}" data-key="${key}"
+               placeholder="${unitPrice.toFixed ? unitPrice.toFixed(2) : unitPrice}"
+               value="${shownVal!==undefined?shownVal:''}">
+      </div>` : `<div class="line-meta col-price">—</div>`;
+    row.innerHTML = `
+      <div><div class="line-name">${name}</div><span class="line-note">${note}</span></div>
+      <div class="line-meta">${qtyLabel}</div>
+      ${priceCell}
+      <div class="line-total">${fmtMoney(lineTotal)}</div>
+    `;
+    list.appendChild(row);
+  }
+
+  // Loan payment
+  const downAmount = driveAwayTotal * (state.downPct/100);
+  const principal = Math.max(0, driveAwayTotal - downAmount);
+  const loanPayment = amortizedPayment(principal, state.rate, state.term);
+  addRow('Loan Payment', `${state.term} mo term × ${state.rate}% APR on ${fmtMoney(principal)} financed (${state.downPct}% down = ${fmtMoney(downAmount)})`, `${state.term} mo`, 0, 'auto','_loan', loanPayment, false);
+
+  // Fuel / Energy — branches by selected powertrain
+  let energyLabel, energyBase, energyCat, energyKey, energyUnitLabel;
+  if(state.powertrain === 'electric'){
+    energyLabel = 'Electricity'; energyBase = cd().utilities.electricityPerKwh;
+    energyCat = 'utilities'; energyKey = 'electricityPerKwh'; energyUnitLabel = 'kWh';
+  }else if(state.powertrain === 'diesel'){
+    energyLabel = 'Diesel'; energyBase = a.dieselPricePerLiter;
+    energyCat = 'auto'; energyKey = 'dieselPricePerLiter'; energyUnitLabel = 'L';
+  }else if(state.powertrain === 'cng'){
+    energyLabel = 'CNG'; energyBase = a.cngPricePerUnit;
+    energyCat = 'auto'; energyKey = 'cngPricePerUnit'; energyUnitLabel = 'kg';
+  }else{
+    // petrol & hybrid both run on petrol; hybrid's advantage shows up through the Efficiency input itself
+    energyLabel = state.powertrain === 'hybrid' ? 'Petrol (hybrid-assisted)' : 'Fuel';
+    energyBase = a.fuelPricePerLiter; energyCat = 'auto'; energyKey = 'fuelPricePerLiter'; energyUnitLabel = 'L';
+  }
+  const energyOv = getOverride(energyCat, energyKey);
+  const energyPrice = energyOv !== undefined ? energyOv : energyBase;
+  const monthlyEnergyUnits = (state.mileage / Math.max(1, state.efficiency)) / 12;
+  const energyCost = monthlyEnergyUnits * energyPrice;
+  addRow(energyLabel, `${state.mileage.toLocaleString()}/yr ÷ ${state.efficiency} efficiency ÷ 12`, `${monthlyEnergyUnits.toFixed(1)} ${energyUnitLabel}`, energyBase, energyCat, energyKey, energyCost);
+
+  // Insurance — supports Monthly or Annual billing entry; stored internally as monthly
+  // regardless of mode, but the input displays/accepts whichever unit is selected.
+  const insBaseMonthly = a.insurancePerMonth, insOv = getOverride('auto','insurancePerMonth');
+  const insPriceMonthly = insOv !== undefined ? insOv : insBaseMonthly;
+  const isAnnual = state.insuranceMode === 'annual';
+  const insDisplayBase = isAnnual ? insBaseMonthly*12 : insBaseMonthly;
+  const insDisplayOv = insOv !== undefined ? (isAnnual ? insOv*12 : insOv) : undefined;
+  addRow('Insurance', isAnnual ? 'annual premium ÷ 12' : 'monthly premium', '1 ×', insDisplayBase, 'auto','insurancePerMonth', insPriceMonthly, true, insDisplayOv);
+
+  // Maintenance
+  const maintBase = a.maintenancePerMonth, maintOv = getOverride('auto','maintenancePerMonth');
+  const maintPrice = maintOv !== undefined ? maintOv : maintBase;
+  addRow('Maintenance', 'monthly reserve', '1 ×', maintBase, 'auto','maintenancePerMonth', maintPrice);
+
+  document.getElementById('monthlyTotal').textContent = fmtMoney(total);
+
+  // ----- the 10% auto rule trap -----
+  const banner = document.getElementById('warningBanner');
+  const detail = document.getElementById('warningDetail');
+  const threshold = state.income * 0.10;
+  if(state.income > 0 && loanPayment > threshold){
+    banner.classList.add('show');
+    detail.textContent = `Loan payment of ${fmtMoney(loanPayment)}/mo is ${((loanPayment/state.income)*100).toFixed(1)}% of your ${fmtMoney(state.income)} monthly income — the rule caps it at 10% (${fmtMoney(threshold)}).`;
+  }else{
+    banner.classList.remove('show');
+  }
+
+  return { monthlyTotal: total, loanPayment, fuelCost: energyCost, insurance: insPriceMonthly, maintenance: maintPrice };
+}
+
+/* ---------------- Summary + Chart ---------------- */
+let chart;
+function renderSummary(p1, accessoriesTotal){
+  const grand = p1.driveAwayTotal + accessoriesTotal;
+  document.getElementById('grandTotal').textContent = fmtMoney(grand);
+
+  const slices = [
+    { label:'Base Price',  value: state.price,       color:'#f5a623' },
+    { label:'Tax & Duty',  value: p1.salesTax + p1.importDuty, color:'#3ddc97' },
+    { label:'Fees',        value: p1.registrationFee, color:'#5b8def' },
+    { label:'Accessories', value: accessoriesTotal,   color:'#ef6a5f' },
+  ];
+
+  const legend = document.getElementById('legend');
+  legend.innerHTML = slices.map(s => `
+    <div class="legend-item">
+      <span class="legend-dot" style="background:${s.color}"></span>
+      ${s.label} <b>${fmtMoney(s.value)}</b>
+    </div>
+  `).join('');
+
+  const ctx = document.getElementById('breakdownChart');
+  const data = {
+    labels: slices.map(s=>s.label),
+    datasets: [{ data: slices.map(s=>s.value), backgroundColor: slices.map(s=>s.color), borderColor:'#0e1d34', borderWidth:2 }]
+  };
+  if(chart){ chart.data = data; chart.update(); }
+  else{
+    chart = new Chart(ctx, {
+      type:'doughnut',
+      data,
+      options:{
+        plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:(c)=> `${c.label}: ${fmtMoney(c.raw)}` } } },
+        cutout:'62%'
+      }
+    });
+  }
+}
+
+/* ---------------- master render ---------------- */
+/* ---------------- master render ---------------- */
+function renderAll(){
+  document.getElementById('priceVal').textContent = state.price.toLocaleString();
+  document.getElementById('downVal').textContent = `${state.downPct}%`;
+  document.getElementById('termVal').textContent = `${state.term} mo`;
+  document.getElementById('rateVal').textContent = `${state.rate}%`;
+  document.getElementById('mileageVal').textContent = state.mileage.toLocaleString();
+  document.getElementById('efficiencyVal').textContent = state.efficiency;
+  document.getElementById('accessoriesLabel').textContent = state.accessories ? 'Included' : 'Excluded';
+  syncManual('priceManual', state.price);
+  syncManual('downManual', state.downPct);
+  syncManual('termManual', state.term);
+  syncManual('rateManual', state.rate);
+  syncManual('mileageManual', state.mileage);
+  syncManual('efficiencyManual', state.efficiency);
+
+  const p1 = renderPhase1();
+  const accessoriesTotal = renderPhase2();
+  const p3 = renderPhase3(p1.driveAwayTotal);
+  renderSummary(p1, accessoriesTotal);
+
+  // ----- Populate lastSummary for PDF -----
+  const a = cd().auto;
+  const fuelPrice = getOverride('auto', 'fuelPricePerLiter') ?? a.fuelPricePerLiter;
+  const electricityTariff = cd().utilities?.electricityPerKwh ?? 0.15;
+  const isElectric = state.powertrain === 'electric';
+
+  // Monthly energy/fuel volume and cost
+  let monthlyVolume = 0;
+  let monthlyEnergyCost = 0;
+  let energyUnit = 'L';
+  let energyLabel = 'Fuel';
+
+  if (isElectric) {
+    monthlyVolume = (state.mileage / state.efficiency) / 12; // kWh per month
+    monthlyEnergyCost = monthlyVolume * electricityTariff;
+    energyUnit = 'kWh';
+    energyLabel = 'Electricity';
+  } else {
+    monthlyVolume = (state.mileage / state.efficiency) / 12; // Liters per month
+    monthlyEnergyCost = monthlyVolume * fuelPrice;
+    energyUnit = 'L';
+    energyLabel = 'Fuel';
+  }
+
+  // Payback period (cash vs petrol baseline)
+  // Baseline: assume a petrol car with 15 km/L efficiency at local petrol price
+  const baselineEfficiency = 15; // km/L for petrol
+  const baselineFuelPrice = a.fuelPricePerLiter;
+  const baselineMonthlyVolume = (state.mileage / baselineEfficiency) / 12;
+  const baselineMonthlyCost = baselineMonthlyVolume * baselineFuelPrice;
+  const monthlySavings = Math.max(0, baselineMonthlyCost - monthlyEnergyCost);
+
+  let paybackMonths = Infinity;
+  if (monthlySavings > 0) {
+    const cashPrice = state.price; // 100% down payment means you pay the full price upfront
+    paybackMonths = cashPrice / monthlySavings;
+  }
+
+  lastSummary = {
+    price: state.price,
+    downPct: state.downPct,
+    term: state.term,
+    rate: state.rate,
+    mileage: state.mileage,
+    efficiency: state.efficiency,
+    powertrain: state.powertrain,
+    income: state.income,
+    driveAwayTotal: p1.driveAwayTotal,
+    accessoriesTotal: accessoriesTotal,
+    grandTotal: p1.driveAwayTotal + accessoriesTotal,
+    loanPayment: p3.loanPayment,
+    monthlyTotal: p3.monthlyTotal,
+    monthlyEnergyCost: monthlyEnergyCost,
+    monthlyVolume: monthlyVolume,
+    energyUnit: energyUnit,
+    energyLabel: energyLabel,
+    baselineMonthlyCost: baselineMonthlyCost,
+    monthlySavings: monthlySavings,
+    paybackMonths: paybackMonths,
+    insuranceMode: state.insuranceMode,
+    // Store country data for PDF
+    countryCode: state.country,
+    currencySymbol: cd().currencySymbol
+  };
+
+  store.settings = {
+    country: state.country, price: state.price, downPct: state.downPct, term: state.term,
+    rate: state.rate, mileage: state.mileage, efficiency: state.efficiency,
+    income: state.income, accessories: state.accessories,
+    powertrain: state.powertrain, insuranceMode: state.insuranceMode
+  };
+  saveStore();
+}
+
+/* ---------------- events ---------------- */
+document.getElementById('countrySelect').addEventListener('change', e => {
+  state.country = e.target.value;
+  renderAll();
+});
+document.getElementById('priceSlider').addEventListener('input', e => {
+  state.price = Number(e.target.value);
+  renderAll();
+});
+document.getElementById('downSlider').addEventListener('input', e => {
+  state.downPct = Number(e.target.value);
+  renderAll();
+});
+document.getElementById('termSlider').addEventListener('input', e => {
+  state.term = Number(e.target.value);
+  renderAll();
+});
+document.getElementById('rateSlider').addEventListener('input', e => {
+  state.rate = Number(e.target.value);
+  renderAll();
+});
+document.getElementById('mileageSlider').addEventListener('input', e => {
+  state.mileage = Number(e.target.value);
+  renderAll();
+});
+document.getElementById('efficiencySlider').addEventListener('input', e => {
+  state.efficiency = Number(e.target.value);
+  renderAll();
+});
+document.getElementById('incomeInput').addEventListener('input', e => {
+  state.income = Number(e.target.value) || 0;
+  renderAll();
+});
+document.getElementById('accessoriesToggle').addEventListener('change', e => {
+  state.accessories = e.target.checked;
+  renderAll();
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+  delete store.overrides[state.country];
+  saveStore();
+  renderAll();
+});
+// Efficiency is measured in wildly different units per powertrain (mpg-equivalent for
+// petrol/diesel/hybrid vs. distance-per-kWh for electric vs. distance-per-kg for CNG),
+// so a leftover value from a different powertrain would silently misprice fuel/energy
+// cost. applyEfficiencyBounds() only syncs the slider range + unit label (safe on every
+// load); resetEfficiencyToPreset() also overwrites the value and is only called when the
+// user actively switches powertrain — never on page load, or a persisted custom value
+// would be silently wiped on every refresh.
+const EFFICIENCY_PRESETS = {
+  petrol:   { min: 1,  max: 60, default: 28, unit: 'distance / liter' },
+  diesel:   { min: 1,  max: 70, default: 34, unit: 'distance / liter' },
+  hybrid:   { min: 1,  max: 90, default: 45, unit: 'distance / liter' },
+  electric: { min: 1,  max: 10, default: 4,  unit: 'distance / kWh' },
+  cng:      { min: 1,  max: 45, default: 20, unit: 'distance / kg' },
+};
+function applyEfficiencyBounds(){
+  const preset = EFFICIENCY_PRESETS[state.powertrain];
+  const slider = document.getElementById('efficiencySlider');
+  const manual = document.getElementById('efficiencyManual');
+  slider.min = manual.min = preset.min;
+  slider.max = manual.max = preset.max;
+  document.getElementById('efficiencyUnitLabel').textContent = preset.unit;
+}
+function resetEfficiencyToPreset(){
+  applyEfficiencyBounds();
+  state.efficiency = EFFICIENCY_PRESETS[state.powertrain].default;
+}
+
+document.getElementById('powertrainSeg').addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  state.powertrain = btn.dataset.p;
+  document.querySelectorAll('#powertrainSeg button').forEach(b=>b.classList.toggle('active', b===btn));
+  resetEfficiencyToPreset();
+  renderAll();
+});
+document.getElementById('insuranceModeSeg').addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  state.insuranceMode = btn.dataset.mode;
+  document.querySelectorAll('#insuranceModeSeg button').forEach(b=>b.classList.toggle('active', b===btn));
+  renderAll();
+});
+bindManual('priceManual', 'priceSlider', v => { state.price = v; renderAll(); });
+bindManual('downManual', 'downSlider', v => { state.downPct = v; renderAll(); });
+bindManual('termManual', 'termSlider', v => { state.term = Math.round(v); renderAll(); });
+bindManual('rateManual', 'rateSlider', v => { state.rate = v; renderAll(); });
+bindManual('mileageManual', 'mileageSlider', v => { state.mileage = v; renderAll(); });
+bindManual('efficiencyManual', 'efficiencySlider', v => { state.efficiency = v; renderAll(); });
+
+// Delegated listener for all custom-price / custom-rate inputs (rebuilt on every render).
+// We capture the raw typed string + cursor position before renderAll() destroys/recreates
+// the input, and restore that exact string afterward — not the derived number — so a
+// trailing "." or "0" typed mid-number never gets silently stripped.
+document.body.addEventListener('input', e => {
+  if(!e.target.classList.contains('price-input')) return;
+  const cat = e.target.dataset.cat, key = e.target.dataset.key;
+  if(key === '_loan') return; // non-editable display row guard
+  const rawTyped = e.target.value;
+  const selStart = e.target.selectionStart, selEnd = e.target.selectionEnd;
+  // percent-style fields (salesTaxRate / importDutyRate) are typed as whole percents, stored as decimals
+  const isPercentField = (key === 'salesTaxRate' || key === 'importDutyRate');
+  // insurance is always stored internally as a MONTHLY figure; when the Annual billing
+  // mode is selected the field displays/accepts an annual number, so divide by 12 on the way in
+  const isInsuranceAnnual = (key === 'insurancePerMonth' && state.insuranceMode === 'annual');
+  let val;
+  if(rawTyped === '') val = '';
+  else if(isPercentField) val = Number(rawTyped)/100;
+  else if(isInsuranceAnnual) val = Number(rawTyped)/12;
+  else val = Number(rawTyped);
+  setOverride(cat, key, val);
+  renderAll();
+  const again = document.querySelector(`.price-input[data-cat="${cat}"][data-key="${key}"]`);
+  if(again){
+    again.value = rawTyped;
+    again.focus();
+    try{ again.setSelectionRange(selStart, selEnd); }catch(_){}
+  }
+});
+
+/* ---------------- init ---------------- */
+/* ---------------- PDF export ---------------- */
+/* ---------------- Professional PDF Export ---------------- */
+function generatePDF() {
+  const btn = document.getElementById('pdfBtn');
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 20;
+
+    // ----- Currency Symbol Mapping -----
+    const symbolMap = {
+      'NG': { symbol: '₦', fallback: 'NGN' },
+      'US': { symbol: '$', fallback: 'USD' },
+      'GB': { symbol: '£', fallback: 'GBP' },
+      'IN': { symbol: '₹', fallback: 'INR' },
+      'KE': { symbol: 'KSh', fallback: 'KES' },
+      'ZA': { symbol: 'R', fallback: 'ZAR' },
+      'GH': { symbol: 'GH₵', fallback: 'GHS' },
+      'EG': { symbol: 'E£', fallback: 'EGP' },
+      'DE': { symbol: '€', fallback: 'EUR' },
+      'FR': { symbol: '€', fallback: 'EUR' },
+      'ES': { symbol: '€', fallback: 'EUR' },
+      'IT': { symbol: '€', fallback: 'EUR' },
+      'NL': { symbol: '€', fallback: 'EUR' },
+      'CN': { symbol: '¥', fallback: 'CNY' },
+      'JP': { symbol: '¥', fallback: 'JPY' },
+      'SG': { symbol: 'S$', fallback: 'SGD' },
+      'ID': { symbol: 'Rp', fallback: 'IDR' },
+      'AE': { symbol: 'AED', fallback: 'AED' },
+      'CA': { symbol: 'C$', fallback: 'CAD' },
+      'AU': { symbol: 'A$', fallback: 'AUD' },
+    };
+    
+    const countryCode = state.country || 'US';
+    const currencyInfo = symbolMap[countryCode] || { symbol: '$', fallback: 'USD' };
+    const currencyLabel = countryCode === 'NG' ? 'NGN' : currencyInfo.symbol;
+
+    // ----- Helper to format money -----
+    function fmtPDF(v) {
+      const clamped = Math.min(Math.max(v || 0, 0), 1000000000000);
+      if (countryCode === 'NG') {
+        return `NGN ${Math.round(clamped).toLocaleString()}`;
+      }
+      return currencyInfo.symbol + Math.round(clamped).toLocaleString();
+    }
+// ----- Theme Toggle (Dark/Light Mode) -----
+function setTheme(theme) {
+  const toggle = document.getElementById('themeToggle');
+  if (theme === 'light') {
+    document.body.classList.add('light-mode');
+    if (toggle) toggle.textContent = '☀️';
+  } else {
+    document.body.classList.remove('light-mode');
+    if (toggle) toggle.textContent = '🌙';
+  }
+  localStorage.setItem('budgetpro_theme', theme);
+}
+
+// Apply saved theme on load
+const savedTheme = localStorage.getItem('budgetpro_theme') || 'dark';
+setTheme(savedTheme);
+
+// Toggle on click
+document.addEventListener('click', function(e) {
+  if (e.target && e.target.id === 'themeToggle') {
+    const current = localStorage.getItem('budgetpro_theme') || 'dark';
+    setTheme(current === 'dark' ? 'light' : 'dark');
+  }
+});
+    // ----- Country Name -----
+    const countryMap = {
+      'NG': 'Nigeria', 'US': 'United States', 'GB': 'United Kingdom',
+      'IN': 'India', 'KE': 'Kenya', 'ZA': 'South Africa',
+      'GH': 'Ghana', 'EG': 'Egypt', 'DE': 'Germany',
+      'FR': 'France', 'ES': 'Spain', 'IT': 'Italy',
+      'NL': 'Netherlands', 'CN': 'China', 'JP': 'Japan',
+      'SG': 'Singapore', 'ID': 'Indonesia', 'AE': 'UAE',
+      'CA': 'Canada', 'AU': 'Australia',
+    };
+    const countryName = countryMap[countryCode] || 'Unknown';
+
+    // ----- Helper to format efficiency units -----
+    function getEfficiencyUnit() {
+      if (state.powertrain === 'electric') return 'km/kWh';
+      return 'km/L';
+    }
+
+    // ----- HEADER -----
+    doc.setFillColor(10, 22, 40);
+    doc.rect(0, 0, pageWidth, 45, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.setTextColor(245, 166, 35);
+    doc.text('BudgetPro', 14, 30);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(255, 255, 255);
+    doc.text('AutoPro Ownership Estimate', 14, 40);
+
+    doc.setFontSize(9);
+    doc.setTextColor(140, 150, 180);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}  |  ${countryName} (${countryCode})`, 14, 52);
+    y = 62;
+
+    // ----- SECTION 1: Vehicle & Financing -----
+    doc.setDrawColor(245, 166, 35);
+    doc.setLineWidth(0.5);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Vehicle & Financing', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+
+    doc.text(`Car Price: ${fmtPDF(state.price)}`, 14, y); y += 6;
+    doc.text(`Powertrain: ${state.powertrain}`, 14, y); y += 6;
+    doc.text(`Down Payment: ${state.downPct}%`, 14, y); y += 6;
+    doc.text(`Loan Term: ${state.term} mo @ ${state.rate}% APR`, 14, y); y += 6;
+    doc.text(`Annual Distance: ${state.mileage.toLocaleString()} km`, 14, y); y += 6;
+    doc.text(`Efficiency: ${state.efficiency} ${getEfficiencyUnit()}`, 14, y); y += 10;
+
+    // ----- SECTION 2: Cost Summary -----
+    doc.setDrawColor(245, 166, 35);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Cost Summary', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+
+    const summary = lastSummary || {};
+    doc.text(`Drive-Away Price (Phase 1): ${fmtPDF(summary.driveAwayTotal)}`, 14, y); y += 6;
+    doc.text(`Accessories (Phase 2): ${fmtPDF(summary.accessoriesTotal)}`, 14, y); y += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(245, 166, 35);
+    doc.text(`Total Drive-Away + Accessories Cost: ${fmtPDF(summary.grandTotal)}`, 14, y); y += 10;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+    doc.text(`Loan Payment: ${fmtPDF(summary.loanPayment)}/mo`, 14, y); y += 6;
+    doc.text(`Total Monthly Ownership Cost: ${fmtPDF(summary.monthlyTotal)}`, 14, y); y += 12;
+
+    // ----- SECTION 3: Energy / Fuel Consumption -----
+    doc.setDrawColor(245, 166, 35);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Energy & Fuel Consumption', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+
+    doc.text(`Fuel Type: ${state.powertrain}`, 14, y); y += 6;
+    doc.text(`Efficiency: ${state.efficiency} ${getEfficiencyUnit()}`, 14, y); y += 6;
+    doc.text(`Monthly ${summary.energyLabel || 'Fuel'} Volume: ${summary.monthlyVolume?.toFixed(1) || '0'} ${summary.energyUnit || 'L'}`, 14, y); y += 6;
+    doc.text(`Monthly ${summary.energyLabel || 'Fuel'} Cost: ${fmtPDF(summary.monthlyEnergyCost)}`, 14, y); y += 10;
+
+    // ----- SECTION 4: Payback Period (100% Cash vs Fuel Savings) -----
+    if (summary.monthlySavings && summary.monthlySavings > 0 && summary.paybackMonths && isFinite(summary.paybackMonths)) {
+      doc.setDrawColor(61, 220, 151);
+      doc.setLineWidth(0.5);
+      doc.line(14, y, pageWidth - 14, y);
+      y += 6;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(61, 220, 151);
+      doc.text('💰 Payback Period (100% Cash vs Fuel Savings)', 14, y);
+      y += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(60, 60, 60);
+      doc.text(`Compared to a standard petrol car (15 km/L):`, 14, y); y += 6;
+      doc.text(`Monthly Savings from ${state.powertrain}: ${fmtPDF(summary.monthlySavings)}`, 14, y); y += 6;
+      const years = summary.paybackMonths / 12;
+      const months = summary.paybackMonths % 12;
+      doc.text(`Payback Period: ${Math.floor(years)} years ${Math.round(months)} months`, 14, y); y += 6;
+      doc.text(`(Your ${state.powertrain} will pay for itself through fuel savings in this time)`, 14, y); y += 10;
+    } else if (state.powertrain === 'electric' && summary.monthlySavings && summary.monthlySavings <= 0) {
+      doc.setDrawColor(239, 106, 95);
+      doc.line(14, y, pageWidth - 14, y);
+      y += 6;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(239, 106, 95);
+      doc.text('⚠️ Electric vs Petrol Comparison', 14, y);
+      y += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(80, 80, 80);
+      doc.text(`Electricity costs are higher than petrol in your region.`, 14, y); y += 6;
+      doc.text(`Consider petrol/hybrid options for better cost efficiency.`, 14, y); y += 10;
+    }
+
+    // ----- SECTION 5: Recommendations -----
+    doc.setDrawColor(245, 166, 35);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Smart Recommendations', 14, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 80);
+
+    const recItems = document.querySelectorAll('#recList li');
+    if (recItems && recItems.length > 0) {
+      recItems.forEach((li) => {
+        const text = li.textContent || 'Adjust the sliders to see personalized recommendations.';
+        const lines = doc.splitTextToSize(text, pageWidth - 28);
+        doc.text(lines, 14, y);
+        y += lines.length * 5 + 3;
+        if (y > 260) {
+          doc.addPage();
+          y = 20;
+        }
+      });
+    } else {
+      doc.text('Adjust the sliders to see personalized recommendations.', 14, y);
+      y += 6;
+    }
+
+    // ----- FOOTER -----
+    doc.setFontSize(8);
+    doc.setTextColor(140, 140, 140);
+    doc.text('All figures are editable local-market placeholders, not lender or dealer quotes.', 14, 280);
+
+    doc.save(`BudgetPro-Auto-${countryCode}.pdf`);
+  } catch (err) {
+    console.error('PDF Error:', err);
+    alert('PDF generation failed: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📄 Download PDF Summary';
+  }
+}
+document.getElementById('pdfBtn').addEventListener('click', generatePDF);
+
+function init(){
+  populateCountries();
+  document.getElementById('priceSlider').value = state.price;
+  document.getElementById('downSlider').value = state.downPct;
+  document.getElementById('termSlider').value = state.term;
+  document.getElementById('rateSlider').value = state.rate;
+  document.getElementById('mileageSlider').value = state.mileage;
+  applyEfficiencyBounds();
+  document.getElementById('efficiencySlider').value = state.efficiency;
+  document.getElementById('incomeInput').value = state.income;
+  document.getElementById('accessoriesToggle').checked = state.accessories;
+  document.querySelectorAll('#powertrainSeg button').forEach(b=>b.classList.toggle('active', b.dataset.p===state.powertrain));
+  document.querySelectorAll('#insuranceModeSeg button').forEach(b=>b.classList.toggle('active', b.dataset.mode===state.insuranceMode));
+  renderAll();
+}
+init();
+</script>
+</body>
+</html>
+

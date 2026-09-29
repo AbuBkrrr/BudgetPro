@@ -316,6 +316,42 @@ body.light-mode .gn-link.active {
   }
   .manual-input:focus{outline:1px solid var(--gold);}
 </style>
+
+<!-- ===== ADSENSE ===== -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2229008759020664" crossorigin="anonymous"></script>
+
+<!-- BudgetPro -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-2229008759020664"
+     data-ad-slot="9906420300"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<!-- Budgetpro manual -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-2229008759020664"
+     data-ad-slot="6768946061"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+<!-- ===== END ADSENSE ===== -->
+
+<!-- ===== GOOGLE ANALYTICS ===== -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XEZBWF9ZVB"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XEZBWF9ZVB');
+</script>
+<!-- ===== END GOOGLE ANALYTICS ===== -->
 </head>
 <body>
 
@@ -362,7 +398,7 @@ body.light-mode .gn-link.active {
       <div class="field">
         <label>System Size <span class="val" id="sizeVal">6 kW</span></label>
         <input type="range" id="sizeSlider" min="1" max="50" step="0.5" value="6">
-        <input type="number" class="manual-input" id="sizeManual" min="1" max="50" step="0.5" value="6" aria-label="size manual entry">
+        <input type="text" inputmode="numeric" class="manual-input" id="sizeManual" min="1" max="50" step="0.5" value="6" aria-label="size manual entry">
       </div>
       <div class="field">
         <label>Roof Type</label>
@@ -380,7 +416,7 @@ body.light-mode .gn-link.active {
       <div class="field">
         <label>Loan Rate (if financing) <span class="val" id="loanRateVal">6.5%</span></label>
         <input type="range" id="loanRateSlider" min="0" max="20" step="0.1" value="6.5">
-        <input type="number" class="manual-input" id="loanRateManual" min="0" max="20" step="0.1" value="6.5" aria-label="loanRate manual entry">
+        <input type="text" inputmode="numeric" class="manual-input" id="loanRateManual" min="0" max="20" step="0.1" value="6.5" aria-label="loanRate manual entry">
       </div>
       <div class="field">
         <label>State / Local Incentives</label>
@@ -399,7 +435,7 @@ body.light-mode .gn-link.active {
       <div class="field" id="loanTermField" style="display:none;">
         <label>Loan Term <span class="val" id="loanTermVal">10 yr</span></label>
         <input type="range" id="loanTermSlider" min="3" max="25" step="1" value="10">
-        <input type="number" class="manual-input" id="loanTermManual" min="3" max="25" step="1" value="10" aria-label="loanTerm manual entry">
+        <input type="text" inputmode="numeric" class="manual-input" id="loanTermManual" min="3" max="25" step="1" value="10" aria-label="loanTerm manual entry">
       </div>
     </div>
   </section>
@@ -503,7 +539,7 @@ body.light-mode .gn-link.active {
       <div class="field">
         <label>Average Grid Supply <span class="val" id="gridHoursVal">18 hrs/day</span></label>
         <input type="range" id="gridHoursSlider" min="0" max="24" step="1" value="18">
-        <input type="number" class="manual-input" id="gridHoursManual" min="0" max="24" step="1" value="18" aria-label="grid supply hours manual entry">
+        <input type="text" inputmode="numeric" class="manual-input" id="gridHoursManual" min="0" max="24" step="1" value="18" aria-label="grid supply hours manual entry">
       </div>
       <div class="field">
         <label>Include Backup Power Value?</label>
@@ -651,7 +687,7 @@ function bindManual(manualId, sliderId, setter){
   const slider = document.getElementById(sliderId);
   if(!manual || !slider) return;
   manual.addEventListener('input', () => {
-    const raw = manual.value;
+    let raw = manual.value.replace(/,/g, '').replace(/[^0-9.]/g, '');
     if(raw === '' || raw === '-' || raw === '.') return;
     const num = Number(raw);
     if(isNaN(num)) return;
@@ -662,9 +698,10 @@ function bindManual(manualId, sliderId, setter){
   });
   manual.addEventListener('change', () => {
     const min = Number(slider.min), max = Number(slider.max);
-    let num = Number(manual.value);
+    let num = Number(manual.value.replace(/,/g, '').replace(/[^0-9.]/g, ''));
     if(isNaN(num)) num = Number(slider.value);
     num = Math.min(max, Math.max(min, num));
+    manual.value = num.toLocaleString();
     setter(num);
   });
 }
