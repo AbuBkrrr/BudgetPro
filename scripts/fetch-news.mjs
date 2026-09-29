@@ -1,6 +1,6 @@
 // scripts/fetch-news.mjs
 // Fetches Nigerian financial news from RSS feeds and NewsAPI,
-// then generates a blog post via Gemini.
+// then generates a blog post via Gemini (with multi-provider fallback).
 
 import Parser from 'rss-parser';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -25,19 +25,24 @@ const RSS_FEEDS = [
 ];
 
 // ---------------------------------------------------------------
-// Gemini model fallback chain — newest first, older (more stable) last.
-// Capacity is per-model, so if one is overloaded (503), the next often works.
+// MODEL FALLBACK CHAIN
+// Ordered: newest & best first, oldest & most stable last.
+// If a model returns 503/429, we retry it 3 times with backoff,
+// then move to the next model in the chain.
 // ---------------------------------------------------------------
 const MODEL_CHAIN = [
-  'gemini-3.8-flash',
+  'gemini-3.8-flash',        // newest, but heavily loaded
+  'gemini-3.8-flash-lite',   // lighter sibling, often has capacity
   'gemini-3.7-flash',
+  'gemini-3.7-flash-lite',
   'gemini-3.6-flash',
   'gemini-3.5-flash',
+  'gemini-3.0-flash',
   'gemini-2.5-flash',
 ];
 
 // ---------------------------------------------------------------
-// Keyword filter — only keep articles relevant to BudgetPro's tools
+// Keyword filter
 // ---------------------------------------------------------------
 const RELEVANT_KEYWORDS = [
   'mortgage', 'housing', 'loan', 'interest rate', 'CBN', 'MPR',
@@ -50,7 +55,7 @@ const RELEVANT_KEYWORDS = [
 ];
 
 // ---------------------------------------------------------------
-// Sleep helper
+// Helpers
 // ---------------------------------------------------------------
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -83,7 +88,6 @@ async function fetchNews() {
     }
   }
 
-  // Deduplicate by title
   const seen = new Set();
   const unique = allArticles.filter(a => {
     if (seen.has(a.title)) return false;
@@ -91,45 +95,68 @@ async function fetchNews() {
     return true;
   });
 
-  // Sort by date, newest first
   unique.sort((a, b) => new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
-
   return unique.slice(0, 8);
 }
 
 // ---------------------------------------------------------------
-// Robust Gemini call: exponential backoff + model fallback chain
+// ROBUST GEMINI CALLER
+// Strategy:
+//   1. For each model in MODEL_CHAIN:
+//        - Try the model once.
+//        - If it fails with a transient error (503/500/429/overloaded),
+//          wait 2s → 4s → 8s and retry (3 total attempts).
+//        - If still failing, move on to next model.
+//   2. If ALL models fail, throw a clear error.
 // ---------------------------------------------------------------
 async function callGemini(genAI, prompt) {
   let lastError = null;
+  const MAX_ATTEMPTS_PER_MODEL = 3;
 
-  // Try each model in the fallback chain
-  for (const modelName of MODEL_CHAIN) {
-    const model = genAI.getGenerativeModel({ model: modelName });
-    const maxAttempts = 3;
+  for (let mi = 0; mi < MODEL_CHAIN.length; mi++) {
+    const modelName = MODEL_CHAIN[mi];
+    let model;
+    try {
+      model = genAI.getGenerativeModel({ model: modelName });
+    } catch (initErr) {
+      console.log(`   ⚠️  Cannot init ${modelName}: ${initErr.message}`);
+      continue;
+    }
 
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS_PER_MODEL; attempt++) {
       try {
-        console.log(`   → ${modelName} (attempt ${attempt}/${maxAttempts})`);
+        console.log(`   → [${mi + 1}/${MODEL_CHAIN.length}] ${modelName} (attempt ${attempt}/${MAX_ATTEMPTS_PER_MODEL})`);
         const result = await model.generateContent(prompt);
+        const text = result.response.text();
+        if (!text || text.trim().length < 20) {
+          throw new Error('Empty response from model');
+        }
         console.log(`   ✅ Success with ${modelName}`);
-        return result.response.text();
+        return text;
       } catch (err) {
         lastError = err;
         const msg = String(err.message || err);
 
-        // Only retry on transient errors: 503, 500, 429, overloaded, etc.
         const isTransient =
           /\b(503|500|429)\b/.test(msg) ||
-          /overloaded|high demand|UNAVAILABLE|RESOURCE_EXHAUSTED|temporarily/i.test(msg);
+          /overloaded|high demand|unavailable|resource[_\s-]?exhausted|temporarily|rate[_\s-]?limit/i.test(msg);
 
-        if (!isTransient) {
-          console.log(`   ❌ ${modelName} non-retryable: ${msg.slice(0, 100)}`);
-          break; // move to next model in chain
+        const isModelGone =
+          /\b(404)\b/.test(msg) ||
+          /not found|no longer available|is not supported|deprecated/i.test(msg);
+
+        if (isModelGone) {
+          console.log(`   ❌ ${modelName} no longer available — skipping`);
+          break; // skip to next model
         }
 
-        if (attempt < maxAttempts) {
-          // Exponential backoff with jitter: 2s, 4s, 8s + random 0-1s
+        if (!isTransient) {
+          console.log(`   ❌ ${modelName} non-retryable error: ${msg.slice(0, 100)}`);
+          break; // skip to next model
+        }
+
+        if (attempt < MAX_ATTEMPTS_PER_MODEL) {
+          // Exponential backoff with jitter: 2s, 4s, 8s + random 0–1s
           const baseDelay = Math.min(8000, Math.pow(2, attempt) * 1000);
           const jitter = Math.floor(Math.random() * 1000);
           const delay = baseDelay + jitter;
@@ -139,10 +166,10 @@ async function callGemini(genAI, prompt) {
       }
     }
 
-    console.log(`   ↪️  Falling back to next model...`);
+    console.log(`   ↪️  ${modelName} exhausted. Moving to next model...`);
   }
 
-  throw new Error(`All models failed. Last error: ${lastError?.message}`);
+  throw new Error(`❌ ALL ${MODEL_CHAIN.length} models failed. Last error: ${lastError?.message || lastError}`);
 }
 
 // ---------------------------------------------------------------
@@ -192,13 +219,13 @@ Return ONLY the title. No quotes. No "Title:" prefix.`;
 
   console.log('🤖 Generating title...');
   const titleRaw = await callGemini(genAI, titlePrompt);
-  const title = titleRaw.trim().replace(/^["']|["']$/g, '').split('\n')[0];
+  const title = titleRaw.trim().replace(/^["']|["']$/g, '').split('\n')[0].slice(0, 100);
 
   return { title, body };
 }
 
 // ---------------------------------------------------------------
-// Convert markdown to HTML (simple converter)
+// Convert markdown to HTML
 // ---------------------------------------------------------------
 function markdownToHtml(md) {
   return md
@@ -310,12 +337,10 @@ async function main() {
   await fs.writeFile(outputPath, html, 'utf-8');
   console.log(`✅ Written: ${outputPath}`);
 
-  // Also write metadata for the index page
   const meta = { title, slug, date: new Date().toISOString(), articles: articles.length };
   const metaPath = path.join('blog', `${slug}.json`);
   await fs.writeFile(metaPath, JSON.stringify(meta, null, 2), 'utf-8');
 
-  // Set GitHub Actions outputs
   if (process.env.GITHUB_OUTPUT) {
     await fs.appendFile(process.env.GITHUB_OUTPUT, `slug=${slug}\ntitle=${title}\n`);
   }
